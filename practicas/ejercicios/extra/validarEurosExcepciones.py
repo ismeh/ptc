@@ -28,6 +28,7 @@ def leerFloatMax2Decimales(mensaje):
             valorValidado = True
         except ValueError:
             print(f"Debe introducir un número flotante, usted introdujo{mensaje}")
+            numeroIntentosIncorrectos += 1
         except AssertionError as error:
             print(error)
             numeroIntentosIncorrectos += 1
@@ -52,6 +53,7 @@ def leerEnteroPositvo(mensaje):
             valorValidado=True
         except ValueError:
             print(f"Debe introducir un número entero, usted introdujo{mensaje}")
+            numeroIntentosIncorrectos+=1
         except AssertionError as error:
             print(error)
             numeroIntentosIncorrectos+=1
