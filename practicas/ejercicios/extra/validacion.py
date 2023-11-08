@@ -17,12 +17,10 @@ def leer_euros():
         entrada = input("Introduce una cantidad de dinero: ")
         cadenas = entrada.split(".")
 
-        #Vacio
-        if(len(entrada) <= 0):
-            continuar = False
+        #Compruebo si esta vacio con if (entrada)
+        if entrada:
+            # Comprobar que todo son números
 
-        # Comprobar que todo son números
-        if continuar:
             n_puntos = 0
             for letra in entrada:
                 if not letra.isdigit():
