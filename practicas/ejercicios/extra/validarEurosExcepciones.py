@@ -52,6 +52,7 @@ def leerEnteroPositvo(mensaje):
             valorIntroducido = input(mensaje)
             digito = int(valorIntroducido)
             assert digito> 0, f"La entrada es positiva y ha indicado {digito}"
+            print(digito)
             valorValidado=True
         except ValueError:
             print(f"Debe introducir un número entero, usted introdujo: {valorIntroducido}")
