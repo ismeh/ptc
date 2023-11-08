@@ -23,7 +23,7 @@ def impares(lista):
     impares = []
     for i in lista:
         if i % 2 != 0:
-            impares.appenwd(i)
+            impares.append(i)
     return impares, len(impares)
 
 #Función 2

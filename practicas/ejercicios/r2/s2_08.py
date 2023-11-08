@@ -5,7 +5,7 @@ no quiero ingerir más de 50 cc de alcohol. Dar el resultado en valor entero.
 """
 import math
 
-alcohol = int(input("Introduzca porcentaje de alcohol: ")) / 100
+alcohol = float(input("Introduzca porcentaje de alcohol: ")) / 100
 VOLUMEN_TERCIO = 333
 MAX_ALCOHOL_SANGRE = 50
 

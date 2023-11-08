@@ -27,7 +27,7 @@ def leerFloatMax2Decimales(mensaje):
             assert validarFloat2DecMenorQue100(digito), f"La entrada debe ser menor que 100 y con 2 decimales y ha indicado: {digito}"
             valorValidado = True
         except ValueError:
-            print(f"Debe introducir un número flotante, usted introdujo{digito}")
+            print(f"Debe introducir un número flotante, usted introdujo{mensaje}")
         except AssertionError as error:
             print(error)
             numeroIntentosIncorrectos += 1
@@ -51,7 +51,7 @@ def leerEnteroPositvo(mensaje):
             assert digito> 0, f"La entrada es positiva y ha indicado {digito}"
             valorValidado=True
         except ValueError:
-            print(f"Debe introducir un número entero, usted introdujo{digito}")
+            print(f"Debe introducir un número entero, usted introdujo{mensaje}")
         except AssertionError as error:
             print(error)
             numeroIntentosIncorrectos+=1
