@@ -26,6 +26,7 @@ def leerFloatMax2Decimales(mensaje):
             valorIntroducido = input(mensaje)
             digito = float(valorIntroducido)
             assert validarFloat2DecMenorQue100(digito), f"La entrada debe ser menor que 100 y con 2 decimales y ha indicado: {digito}"
+            print(digito)
             valorValidado = True
         except ValueError:
             print(f"Debe introducir un número flotante, usted introdujo: {valorIntroducido}")
