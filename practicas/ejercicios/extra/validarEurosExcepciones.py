@@ -18,6 +18,7 @@ def leerFloatMax2Decimales(mensaje):
             # número con 2 digitas y 2 decimales
             valorIntroducido = input(mensaje)
             digito = float(valorIntroducido)
+            assert digito > 0, f"La entrada debe ser mayor que 0 y ha indicado: {digito}"
             assert len(valorIntroducido.split(".")[1]) <= 2, f"La entrada debe tener como mucho 2 decimales: {digito}"
             print(f"CORRECTO {digito}")
             valorValidado = True
