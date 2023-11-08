@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     Relación 4: listas
         Realizar dos versiones de cada ejercicio (si es posible)
