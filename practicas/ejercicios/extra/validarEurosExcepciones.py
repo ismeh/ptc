@@ -68,10 +68,10 @@ if __name__=="__main__":
     nCorrectas+=1
     nIncorrectas=nIncorrectas+nInc
     interés, nInc=leerFloatMax2Decimales("Dime interés anual con 2 decimales máximo: ")
-    nCorrectos+=1
+    nCorrectas+=1
     nIncorrectas=nIncorrectas+nInc
     anios, nInc =leerEnteroPositvo("Dime el número de años: ")
-    nCorrectos+=1
+    nCorrectas+=1
     nIncorrectas=nIncorrectas+nInc
     print("Fin del programa de validación de euros")
     print("Nombre estudiante: ",nombreEstudiante)
