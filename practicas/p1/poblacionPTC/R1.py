@@ -4,13 +4,14 @@ R1. Calcular la variación de la población por provincias desde el año 2011 a 
     relativos generando la página web 1 (que debe llamarse variacionProvincias.html)
 """
 import csv
+import locale
+import os
 
-import funciones as f
-import numpy as np
+import funciones as func
 
 
 def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False):
-    """Modifica un fichero csv para que solo contenga los datos de población de las provincias españolas
+    """Modifica un fichero csv para que solo contenga los datos relevantes de población de las provincias españolas
 
     Args:
         fichero: Ruta del fichero
@@ -40,26 +41,26 @@ def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False)
 
     archivo.close()
 
+
 def crearHtml(destino, ruta_datos):
     """Crea el fichero HTML con los datos de población (variación absoluta y relativa)
 
     Args:
         destino: Ruta del fichero de salida
         ruta_datos: Ruta del fichero de datos
-    """    
+    """
 
     f = open(destino, 'w', encoding="utf8")
 
-    datos = open(ruta_datos, encoding="utf8") #Datos con las columnas con las que quiero trabajr, el resto = None (hombres y mujeres)
-    poblacionDict = csv.DictReader(datos, delimiter=';') #Lector
-    primera_fila = poblacionDict.__next__() #Primera fila de datos, para sacar los atributos
-    atributos = [k for k in primera_fila.keys() if k != None] #Las columnas sin nombre son = None, las descarto
+    datos = open(ruta_datos,
+                 encoding="utf8")  # Datos con las columnas con las que quiero trabajr, el resto = None (hombres y mujeres)
+    poblacionDict = csv.DictReader(datos, delimiter=';')  # Lector
+    primera_fila = poblacionDict.__next__()  # Primera fila de datos, para sacar los atributos
+    atributos = [k for k in primera_fila.keys() if k != None]  # Las columnas sin nombre son = None, las descarto
     num_atributos = len(atributos)
-    #TIPOS = 1 #total | #total, hombres, mujeres
+    MAIN_HEADER = 2  # Variación absoluta y relativa
 
-    # poblacion = {"Andalucía": [6700000, 6900000, 7000000],
-    #              "Castilla León": [2300000, 2350000, 2400000],
-    #              "Aragón": [1100000, 1200000, 1300000]}
+    # print(atributos)
 
     paginaPob = """
     <!DOCTYPE html><html>
@@ -69,52 +70,61 @@ def crearHtml(destino, ruta_datos):
     <body>
     """
 
-    #Tabla
+    # Tabla
     paginaPob += """<table>"""
 
-    #Cabecera de la tabla
+    # Cabecera de la tabla
     paginaPob += """<tr>
         <th></th>
         <th colspan={0}>Variación absoluta</th>
         <th colspan={0}>Variación relativa</th>
         </tr>
         <tr>
-    """.format(num_atributos-2) # -2 para quitar el primer atributo y 1 año (2010)
+    """.format(num_atributos - 2)  # -2 para quitar el primer atributo y 1 año (2010)
 
-    paginaPob += "<th>%s</th>" % (atributos[0]) #Provincias
-    for atr in atributos[1:-1]: #Años Variación absoluta, -1 para no añadir 2010
+    paginaPob += "<th>%s</th>" % (atributos[0])  # Provincias
+    for atr in atributos[1:-1]:  # Años Variación absoluta, -1 para no añadir 2010
         paginaPob += "<th>%s</th>" % (atr.replace('T', ''))
-    for atr in atributos[1:-1]: #Años Variación relativa
+    for atr in atributos[1:-1]:  # Años Variación relativa
         paginaPob += "<th>%s</th>" % (atr.replace('T', ''))
     paginaPob += "</tr>"
 
     # Filas tabla
-    #Primera fila
-    columnas_procesar = (num_atributos-1) # -1 para quitar el primer atributo (provincia)
+    # Primera fila
+    columnas_procesar = (num_atributos - 1)  # para quitar la columna 2010
     paginaPob += "<tr><td>%s</td>" % (primera_fila[atributos[0]])
-    for i in range(1, columnas_procesar):
-        siguiente = i+1
-        paginaPob += "<td>%d</td>" % (variacion_absoluta(float(primera_fila[atributos[i]]), float(primera_fila[atributos[siguiente]])))
-    for i in range(1, columnas_procesar):
-        siguiente = i + 1
-        paginaPob += "<td>%d</td>" % (variacion_relativa(float(primera_fila[atributos[i]]), float(primera_fila[atributos[siguiente]])))
+    for j in range(MAIN_HEADER):
+        for i in range(1, columnas_procesar):  # Empezamos desde la col 2017
+            siguiente = i + 1
+            if j == 0:
+                paginaPob += "<td>%s</td>" % locale.currency(func.variacion_absoluta(float(primera_fila[atributos[i]]),
+                                                                                     float(primera_fila[
+                                                                                               atributos[siguiente]])),
+                                                             symbol=False,
+                                                             grouping=True)  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
+            else:
+                paginaPob += "<td>%s</td>" % locale.currency(func.variacion_relativa(float(primera_fila[atributos[i]]),
+                                                                                     float(primera_fila[
+                                                                                               atributos[siguiente]])),
+                                                             symbol=False, grouping=True)
     paginaPob += "</tr>"
 
-    # for fila in poblacionDict:
-    #     paginaPob += "<tr><td>%s</td>" % (fila[atributos[0]])
-    #     for i in range(1, columnas):
-    #         if i < columnas/2:
-    #             paginaPob += "<td>%d</td>" % (variacion_absoluta((float)(fila[atributos[i]]), (float)(fila[atributos[i+1]])))
-    #         else:
-    #             paginaPob += "<td>%d</td>" % (variacion_relativa((float)(fila[atributos[i]]), (float)(fila[atributos[i+1]])))
-    #     paginaPob += "</tr>"
-    # ---------------dormir--------------
-    # for comunidad, habitantes in sorted(poblacion.items()):
-    #     paginaPob += "<tr><td>%s</td>" % (comunidad)
-    #     for habitantesAnio in habitantes:
-    #         paginaPob += "<td>%d</td>" % (habitantesAnio)
-    #     paginaPob += "</tr>"
-
+    # Resto de filas
+    for fila in poblacionDict:
+        paginaPob += "<tr><td>%s</td>" % (fila[atributos[0]])
+        for j in range(MAIN_HEADER):
+            for i in range(1, columnas_procesar):  # Empezamos desde la col 2017
+                siguiente = i + 1
+                if j == 0:
+                    paginaPob += "<td>%s</td>" % locale.currency(
+                        func.variacion_absoluta(float(fila[atributos[i]]), float(fila[atributos[siguiente]])),
+                        symbol=False,
+                        grouping=True)  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
+                else:
+                    paginaPob += "<td>%s</td>" % locale.currency(
+                        func.variacion_relativa(float(fila[atributos[i]]), float(fila[atributos[siguiente]])),
+                        symbol=False, grouping=True)
+        paginaPob += "</tr>"
     paginaPob += "</table></body></html>"
 
     f.write(paginaPob)
@@ -123,23 +133,31 @@ def crearHtml(destino, ruta_datos):
     print("Se ha guardado la web en ", destino)
 
 
-# Funciones lambda para calcular variación absoluta y relativa
-variacion_absoluta = lambda actual, anterior: actual - anterior
-variacion_relativa = lambda actual, anterior: (variacion_absoluta(actual, anterior) / anterior) * 100
+def ejercicio1():
+    locale.setlocale(locale.LC_ALL, 'es_ES.utf8')
 
-NOMBRE_WEB1 = "variacionProvincias.html"
-FICHERO_DATOS = f.DIRECTORIO_ENTRADAS + "poblacionProvinciasHM2010-17.csv"
-DATOS_LIMPIOS = f.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv"
+    NOMBRE_WEB1 = "variacionProvincias.html"
+    FICHERO_DATOS = func.DIRECTORIO_ENTRADAS + "poblacionProvinciasHM2010-17.csv"
+    DATOS_LIMPIOS = func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv"
 
-prepararCSV(FICHERO_DATOS, DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
-crearHtml(f.DIRECTORIO_RESULTADOS+NOMBRE_WEB1, DATOS_LIMPIOS)
+    prepararCSV(FICHERO_DATOS, DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
+    crearHtml(func.DIRECTORIO_RESULTADOS + NOMBRE_WEB1, DATOS_LIMPIOS)
 
-datos = open(DATOS_LIMPIOS, encoding="utf8")
-poblacionDict = csv.DictReader(datos, delimiter=';')
+    #Borrar fichero temporal
+    os.remove(DATOS_LIMPIOS)
 
-print(poblacionDict.__next__())
-a = (poblacionDict.__next__())
-print(a['Provincia'])
-print(a)
-# for x in poblacionDict:
-#     print(x)
+if __name__ == "R1":  # Cada vez que lo importe se ejecutará todo lo que esté aquí dentro
+    ejercicio1()
+
+if __name__ == "__main__":  # Si lo ejecuto como fichero principal, se ejecuta lo que hay aquí dentro
+    ejercicio1()
+
+    # Pruebas
+    datos = open(func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv", encoding="utf8")
+    poblacionDict = csv.DictReader(datos, delimiter=';')
+    print(poblacionDict.__next__())
+    a = (poblacionDict.__next__())
+    print(a['Provincia'])
+    print(a)
+    # for x in poblacionDict:
+    #     print(x)
