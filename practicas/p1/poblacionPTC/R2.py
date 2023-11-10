@@ -53,7 +53,88 @@ def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False)
 
     archivo.close()
 
-def crearHtml(destino, ruta_datos):
+def inicioHTML(nombre, estilo):
+    """Crea el inicio del fichero HTML
+
+    Args:
+        nombre: Nombre de la web
+        estilo: Ruta del fichero CSS
+
+    Returns:
+        inicio: Inicio del fichero HTML
+    """
+
+    inicio = """
+    <!DOCTYPE html><html>
+    <head><title>%s</title>
+    <link rel="stylesheet" href=%s>
+    <meta charset="utf8"></head>
+    <body>
+    """ % (nombre, estilo)
+
+    return inicio
+
+def cuerpoHTML(MAIN_HEADER, atributos, primera_fila, poblacionDict):
+    """Crea el cuerpo del fichero HTML, es decir la tabla con los datos
+
+    Returns:
+        paginaPob: Cuerpo del fichero HTML
+    """
+
+    # Tabla
+    paginaWeb = """<table>"""
+
+    # Cabecera de la tabla
+    paginaWeb += """<tr>
+            <th rowspan=2>CCAA</th>
+            <th colspan={0}>Total</th>
+            <th colspan={0}>Hombres</th>
+            <th colspan={0}>Mujeres</th>
+            </tr>
+            <tr>
+        """.format((len(atributos) - 1)/len(MAIN_HEADER))  # -1 para quitar el primer atributo
+
+    # for header in range(len(MAIN_HEADER)):
+    for atr in atributos[1:]:  # Años Variación absoluta, -1 para no añadir 2010
+        paginaWeb += "<th>%s</th>" % (atr[1:]) #Reemplazar la letra por un vacio
+    paginaWeb += "</tr>"
+
+    # Filas tabla
+    # Primera fila IGNORAMOS TOTAL NACIONAL
+    columnas_procesar = (len(atributos))
+
+    # Resto de filas
+    for fila in poblacionDict:
+        paginaWeb += "<tr><td>%s</td>" % (fila[atributos[0]])
+        for j in range(len(MAIN_HEADER)):
+            for i in range(1, columnas_procesar):  # Empezamos desde la col 2017
+                siguiente = i #cambiar esto
+                if j == 0:
+                    paginaWeb += "<td>%s</td>" % locale.currency(
+                        func.variacion_absoluta(float(fila[atributos[i]]), float(fila[atributos[siguiente]])),
+                        symbol=False,
+                        grouping=True)  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
+                else:
+                    paginaWeb += "<td>%s</td>" % locale.currency(
+                        func.variacion_relativa(float(fila[atributos[i]]), float(fila[atributos[siguiente]])),
+                        symbol=False, grouping=True)
+        paginaWeb += "</tr>"
+    paginaWeb += "</table>"
+
+
+    return paginaWeb
+
+def finHTML():
+    """Crea el final del fichero HTML
+
+    Returns:
+        fin: Final del fichero HTML
+    """
+
+    fin = """</body></html>"""
+
+    return fin
+def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     """Crea el fichero HTML con los datos de población (variación absoluta y relativa)
 
     Args:
@@ -63,137 +144,98 @@ def crearHtml(destino, ruta_datos):
 
     f = open(destino, 'w', encoding="utf8")
 
-    datos = open(ruta_datos,
+    #Datos-Atributos-Cabeceras...
+    #CSV
+    fichero_csv = open(ruta_datos,
                  encoding="utf8")  # Datos con las columnas con las que quiero trabajr, el resto = None (hombres y mujeres)
-    poblacionDict = csv.DictReader(datos, delimiter=';')  # Lector
+    poblacionDict = csv.DictReader(fichero_csv, delimiter=';')  # Lector
     primera_fila = poblacionDict.__next__()  # Primera fila de datos, para sacar los atributos
     atributos = [k for k in primera_fila.keys() if k != None]  # Las columnas sin nombre son = None, las descarto
-    num_atributos = len(atributos)
-    MAIN_HEADER = 3  # Total-Hombre-Mujer
+    MAIN_HEADER = ["Total", "Hombre", "Mujer"]
+    #Comunidades
+    dic_ca = lista_to_dict(lista_comunidades, (0, 1), 2)
+    print(dic_ca)
+
+    #html
+    paginaWeb = inicioHTML("Web 2", "../estilo2.css")
+    paginaWeb += cuerpoHTML(MAIN_HEADER, atributos, primera_fila, poblacionDict)
+    paginaWeb += finHTML()
 
 
-    paginaPob = """
-    <!DOCTYPE html><html>
-    <head><title>Web 2</title>
-    <link rel="stylesheet" href="../estilo2.css">
-    <meta charset="utf8"></head>
-    <body>
-    """
 
-    # Tabla
-    paginaPob += """<table>"""
-
-    # Cabecera de la tabla
-    paginaPob += """<tr>
-        <th></th>
-        <th rowspan=2>CCAA</th>
-        <th colspan={0}>Total</th>
-        <th colspan={0}>Hombres</th>
-        <th colspan={0}>Mujeres</th>
-        </tr>
-        <tr>
-    """.format(num_atributos - 1)  # -1 para quitar el primer atributo
-
-    for header in range(MAIN_HEADER):
-        for atr in atributos[1:]:  # Años Variación absoluta, -1 para no añadir 2010
-            paginaPob += "<th>%s</th>" % (atr.replace('T', ''))
-    paginaPob += "</tr>"
-
-
-    # Filas tabla
-    # Primera fila
-    columnas_procesar = (num_atributos)
-    paginaPob += "<tr><td>%s</td>" % (primera_fila[atributos[0]])
-    for j in range(MAIN_HEADER):
-        for i in range(1, columnas_procesar):  # Empezamos desde la col 2017
-            siguiente = i + 1
-            if j == 0:
-                paginaPob += "<td>%s</td>" % locale.currency(func.variacion_absoluta(float(primera_fila[atributos[i]]),
-                                                                                     float(primera_fila[
-                                                                                               atributos[siguiente]])),
-                                                             symbol=False,
-                                                             grouping=True)  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
-            else:
-                paginaPob += "<td>%s</td>" % locale.currency(func.variacion_relativa(float(primera_fila[atributos[i]]),
-                                                                                     float(primera_fila[
-                                                                                               atributos[siguiente]])),
-                                                             symbol=False, grouping=True)
-    paginaPob += "</tr>"
-
-    # Resto de filas
-    for fila in poblacionDict:
-        paginaPob += "<tr><td>%s</td>" % (fila[atributos[0]])
-        for j in range(MAIN_HEADER):
-            for i in range(1, columnas_procesar):  # Empezamos desde la col 2017
-                siguiente = i + 1
-                if j == 0:
-                    paginaPob += "<td>%s</td>" % locale.currency(
-                        func.variacion_absoluta(float(fila[atributos[i]]), float(fila[atributos[siguiente]])),
-                        symbol=False,
-                        grouping=True)  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
-                else:
-                    paginaPob += "<td>%s</td>" % locale.currency(
-                        func.variacion_relativa(float(fila[atributos[i]]), float(fila[atributos[siguiente]])),
-                        symbol=False, grouping=True)
-        paginaPob += "</tr>"
-    paginaPob += "</table></body></html>"
-
-    f.write(paginaPob)
-    datos.close()
+    f.write(paginaWeb)
+    fichero_csv.close()
     f.close()
     print("Se ha guardado la web en ", destino)
 
+def lista_to_dict(lista, key_value, num_atributos):
+    """Convierte una lista en un diccionario
+
+    Args:
+        lista: Lista a convertir
+        key_value: Tupla de atributos a usar como clave y valor
+        num_atributos: Número de atributos de la lista
+
+    Returns:
+        diccionario: Diccionario con los datos de la lista
+    """
+    diccionario = {}
+    for i in range(0, len(lista), num_atributos):
+        diccionario[lista[i + key_value[0]]] = lista[i + key_value[1] - 1]
+
+    return diccionario
 def leerHtml(fichero):
     """
         Lee un fichero HTML y extrae los datos de las celdas
         Args:
             fichero: Ruta local del fichero
+        Returns:
+            lista: Lista con los valores extraidos de las celdas
     """
     comunidadesFich = open(fichero, 'r', encoding="utf8")
 
     comString = comunidadesFich.read() #Todo el HTML
 
-    print("\nFichero leido ")
-
     soup = BeautifulSoup(comString, 'html.parser')
 
-    celdas = soup.find_all('td')
+    celdas = soup.find_all('td') #Todos los datos de las celdas HTML
 
-    print(celdas)
-    #
-    # lista = []
-    #
-    # for celda in celdas:
-    #     lista.append(celda.get_text())
-    #
-    # print("\nLista con los valores extraidos de las celdas\n", lista)
-    #
+
+    lista = []
+
+    #Lista con los valores extraidos de las celdas
+    for celda in celdas:
+        lista.append(celda.get_text())
+
+    # Otra opción para extraer los datos de las celdas (como en 'lista')
     # tree = html.fromstring(comString)
-    #
     # celdas = tree.xpath('//td/text()')
-    #
-    # print("\nLas celdas son\n", celdas)
+
+    return lista
+
 def ejercicio2():
     # Configuración de formato de números en output
     locale.setlocale(locale.LC_ALL, 'es_ES.utf8')
 
-    # Constantes
+    # Constantes - Datos
     FICHERO_DATOS_pp = func.DIRECTORIO_ENTRADAS + "poblacionProvinciasHM2010-17.csv"
     FICHERO_DATOS_ca = func.DIRECTORIO_ENTRADAS + "comunidadesAutonomas.htm"
     FICHERO_DATOS_cap = func.DIRECTORIO_ENTRADAS + "comunidadAutonoma-Provincia.htm"
     DATOS_LIMPIOS = func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv"
     FICHERO_SALIDA = func.DIRECTORIO_RESULTADOS + "poblacionComAutonomas.html"
 
+    lista_comunidades = leerHtml(FICHERO_DATOS_ca)
+    lista_provincias = leerHtml(FICHERO_DATOS_cap)
 
     prepararCSV(FICHERO_DATOS_pp, DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
-    crearHtml(FICHERO_SALIDA, DATOS_LIMPIOS)
+    crearHtml(FICHERO_SALIDA, DATOS_LIMPIOS, lista_comunidades, lista_provincias)
 
 if __name__ == "R1":  # Cada vez que lo importe se ejecutará todo lo que esté aquí dentro
     ejercicio2()
 
 if __name__ == "__main__":  # Si lo ejecuto como fichero principal, se ejecuta lo que hay aquí dentro
-    # ejercicio2()
-    #
+    ejercicio2()
+    # FICHERO_DATOS_ca = func.DIRECTORIO_ENTRADAS + "comunidadesAutonomas.htm"
     # # Pruebas
     # datos = open(func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv", encoding="utf8")
     # poblacionDict = csv.DictReader(datos, delimiter=';')
@@ -202,6 +244,4 @@ if __name__ == "__main__":  # Si lo ejecuto como fichero principal, se ejecuta l
     # atributos = [k for k in a.keys() if k != None]  # Las columnas sin nombre son = None, las descarto
     # print(atributos)
 
-    FICHERO_DATOS_ca = func.DIRECTORIO_ENTRADAS + "comunidadesAutonomas.htm"
-    leerHtml(FICHERO_DATOS_ca)
 
