@@ -160,20 +160,23 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
 
     #Comunidades
     dic_ca = lista_to_dict(lista_comunidades, (1, 0), 2) #Key(comunidad) - Value(codigo comunidad)
-    dic_ca_pro = lista_to_dict_vector_tupla(lista_provincias, (1, (2, 3)), 4) #Key Comunidad- Valor Vector(Tupla(Codigo Prov - Provincia))
-    print(dic_ca.items())
+    dic_pro= lista_to_dict(lista_provincias, (2, 3), 4) #Key(codigo provincia) - Value(provincia)
+    dic_ca_pro = lista_to_dict_vector(lista_provincias, (1, 2), 4) #Key Comunidad- Valor Vector(Codigo Prov)
+    # print(dic_ca.items())
+    # print(dic_pro["04"])
     PROVINCIAS = (dic_ca_pro.values())
     array_poblacion_provincia = csv_poblacion_to_numpy(fichero_csv, len(PROVINCIAS), len(SECCIONES), anios)
 
     # for com in dic_ca_pro.values():
     #     print(com)
-    def poblacion_comunidad(d_pob_prov, dic_ca, dic_capro):
+    def poblacion_comunidad(d_pob_prov, dic_ca, dic_ca_pro, dic_pro):
         """Calcula la población de cada comunidad autónoma
 
         Args:
             d_pob_prov: Array de numpy con los datos de población
             dic_ca: Diccionario con las comunidades autónomas
             dic_capro: Diccionario con las provincias de cada comunidad autónoma
+            dic_pro: Diccionario con las provincias
 
         Returns:
             d_pob_com: Diccionario con la población de cada comunidad autónoma por años
@@ -194,22 +197,41 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
                 codigo_str = "0" + codigo_str
 
             return codigo_str
+        def buscar_provincia_in_dict_comunidad(dic_comunidades_prov, cod_provincia):
+                """Busca la provincia en el diccionario de comunidades autónomas
+
+                Args:
+                    dic_comunidades_prov: Diccionario de comunidades autónomas
+                    cod_provincia: Código de la provincia a buscar
+
+                Returns:
+                    com_actual: Comunidad autónoma a la que pertenece la provincia
+                """
+                for comunidad in dic_comunidades_prov:
+                    if cod_provincia in dic_comunidades_prov[comunidad]:
+                        return comunidad
 
         #Creo la estructura del diccionario
         dic_pob_com = {}
         for comunidad in dic_ca:
-            dic_pob_com[comunidad] = np.zeros(len(d_pob_prov)-1, dtype=numpy.int_) #Array de tantos datos como columnas
+            dic_pob_com[comunidad] = np.zeros(len(d_pob_prov[0])-1, dtype=numpy.int_) #Array de tantos datos como columnas en una fila(provincia) de los datos
+
+        # print("d_pob_prov-1", len(d_pob_prov)-1)
+        # print("d_provincia=d_pob_prov[0]-1", len(d_pob_prov[0])-1)
+        # print("npArray", np.shape(d_pob_prov))
+        # print("npArray fila datos", np.shape(d_pob_prov[0][1:]))
+        # print("dic_pob_com", len(dic_pob_com.values()))
+        # print("dic_pob_com[andalucia]", len(dic_pob_com["Andalucía"]))
 
         #Añado los valores a la estructura
         for d_provincia in d_pob_prov:
             codigo = codigo_to_str_x_digitos(d_provincia[0])
-            com_actual = ''
-            for
-            if(codigo in )
-            dic_pob_com[comunidad] += d_pob_prov[provincia[0]]
+            provincia = dic_pro[codigo]
+            com_actual = buscar_provincia_in_dict_comunidad(dic_ca_pro, codigo)
+            dic_pob_com[com_actual] += d_provincia[1:]
 
         return dic_pob_com
-
+    dic_pob_com = poblacion_comunidad(array_poblacion_provincia, dic_ca, dic_ca_pro,dic_pro)
 
     # print(dic_ca["Andalucía"])
     # print(dic_ca_pro)
@@ -246,12 +268,12 @@ def lista_to_dict(lista, key_value, num_atributos) -> dict:
 
     return diccionario
 
-def lista_to_dict_vector_tupla(lista, key_value, num_atributos) -> dict:
+def lista_to_dict_vector(lista, key_value, num_atributos) -> dict:
     """Convierte una lista en un diccionario
 
     Args:
         lista: Lista a convertir
-        key_value: Indices de los atributos de la lista a usar como clave y valor(tupla) en el diccionario
+        key_value: Indices de los atributos de la 'lista' a usar como clave y valor(array) en el diccionario
         num_atributos: Número de atributos de la lista
 
     Returns:
@@ -259,13 +281,13 @@ def lista_to_dict_vector_tupla(lista, key_value, num_atributos) -> dict:
     """
     diccionario = {}
     for i in range(0, len(lista), num_atributos):
-        tupla = (lista[i + key_value[1][0]], lista[i + key_value[1][1]])
+        valor = lista[i + key_value[1]]
 
-        #Si comunidad en diccionario, añadir provincia, sino crear comunidad y añadir provincia
+        #Si comunidad existe en diccionario, añadir provincia, sino crear comunidad y añadir provincia
         if lista[i + key_value[0]] in diccionario:
-            diccionario[lista[i + key_value[0]]].append(tupla)
+            diccionario[lista[i + key_value[0]]].append(valor)
         else:
-            diccionario[lista[i + key_value[0]]] = [tupla]
+            diccionario[lista[i + key_value[0]]] = [valor]
 
     return diccionario
 
