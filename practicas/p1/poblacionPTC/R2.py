@@ -17,6 +17,10 @@ R2. Usando el listado de comunidades autónomas que podemos obtener del fichero
 
 import csv
 import locale
+
+import numpy
+import numpy as np
+
 import funciones as func
 from bs4 import BeautifulSoup
 from lxml import html
@@ -74,7 +78,7 @@ def inicioHTML(nombre, estilo):
 
     return inicio
 
-def cuerpoHTML(MAIN_HEADER, atributos, primera_fila, poblacionDict):
+def cuerpoHTML(SECCIONES, atributos, primera_fila, poblacionDict):
     """Crea el cuerpo del fichero HTML, es decir la tabla con los datos
 
     Returns:
@@ -92,9 +96,9 @@ def cuerpoHTML(MAIN_HEADER, atributos, primera_fila, poblacionDict):
             <th colspan={0}>Mujeres</th>
             </tr>
             <tr>
-        """.format((len(atributos) - 1)/len(MAIN_HEADER))  # -1 para quitar el primer atributo
+        """.format((len(atributos) - 1)/len(SECCIONES))  # -1 para quitar el primer atributo
 
-    # for header in range(len(MAIN_HEADER)):
+    # for header in range(len(SECCIONES)):
     for atr in atributos[1:]:  # Años Variación absoluta, -1 para no añadir 2010
         paginaWeb += "<th>%s</th>" % (atr[1:]) #Reemplazar la letra por un vacio
     paginaWeb += "</tr>"
@@ -106,7 +110,7 @@ def cuerpoHTML(MAIN_HEADER, atributos, primera_fila, poblacionDict):
     # Resto de filas
     for fila in poblacionDict:
         paginaWeb += "<tr><td>%s</td>" % (fila[atributos[0]])
-        for j in range(len(MAIN_HEADER)):
+        for j in range(len(SECCIONES)):
             for i in range(1, columnas_procesar):  # Empezamos desde la col 2017
                 siguiente = i #cambiar esto
                 if j == 0:
@@ -151,14 +155,71 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     poblacionDict = csv.DictReader(fichero_csv, delimiter=';')  # Lector
     primera_fila = poblacionDict.__next__()  # Primera fila de datos, para sacar los atributos
     atributos = [k for k in primera_fila.keys() if k != None]  # Las columnas sin nombre son = None, las descarto
-    MAIN_HEADER = ["Total", "Hombre", "Mujer"]
+    SECCIONES = ["Total", "Hombre", "Mujer"]
+    anios = 8 #2017-2010
+
     #Comunidades
-    dic_ca = lista_to_dict(lista_comunidades, (0, 1), 2)
-    print(dic_ca)
+    dic_ca = lista_to_dict(lista_comunidades, (1, 0), 2) #Key(comunidad) - Value(codigo comunidad)
+    dic_ca_pro = lista_to_dict_vector_tupla(lista_provincias, (1, (2, 3)), 4) #Key Comunidad- Valor Vector(Tupla(Codigo Prov - Provincia))
+    print(dic_ca.items())
+    PROVINCIAS = (dic_ca_pro.values())
+    array_poblacion_provincia = csv_poblacion_to_numpy(fichero_csv, len(PROVINCIAS), len(SECCIONES), anios)
+
+    # for com in dic_ca_pro.values():
+    #     print(com)
+    def poblacion_comunidad(d_pob_prov, dic_ca, dic_capro):
+        """Calcula la población de cada comunidad autónoma
+
+        Args:
+            d_pob_prov: Array de numpy con los datos de población
+            dic_ca: Diccionario con las comunidades autónomas
+            dic_capro: Diccionario con las provincias de cada comunidad autónoma
+
+        Returns:
+            d_pob_com: Diccionario con la población de cada comunidad autónoma por años
+        """
+
+        def codigo_to_str_x_digitos(codigo, digitos=2):
+            """Convierte un código a string con x dígitos
+
+            Args:
+                codigo: Código a convertir
+                digitos: Número de dígitos del código
+
+            Returns:
+                codigo_str: Código convertido a string
+            """
+            codigo_str = str(codigo)
+            while len(codigo_str) < digitos:
+                codigo_str = "0" + codigo_str
+
+            return codigo_str
+
+        #Creo la estructura del diccionario
+        dic_pob_com = {}
+        for comunidad in dic_ca:
+            dic_pob_com[comunidad] = np.zeros(len(d_pob_prov)-1, dtype=numpy.int_) #Array de tantos datos como columnas
+
+        #Añado los valores a la estructura
+        for d_provincia in d_pob_prov:
+            codigo = codigo_to_str_x_digitos(d_provincia[0])
+            com_actual = ''
+            for
+            if(codigo in )
+            dic_pob_com[comunidad] += d_pob_prov[provincia[0]]
+
+        return dic_pob_com
+
+
+    # print(dic_ca["Andalucía"])
+    # print(dic_ca_pro)
+    # print(len((dic_ca_pro).values()))
+    # print(dic_ca_pro["Andalucía"])
+
 
     #html
     paginaWeb = inicioHTML("Web 2", "../estilo2.css")
-    paginaWeb += cuerpoHTML(MAIN_HEADER, atributos, primera_fila, poblacionDict)
+    paginaWeb += cuerpoHTML(SECCIONES, atributos, primera_fila, poblacionDict)
     paginaWeb += finHTML()
 
 
@@ -168,12 +229,12 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     f.close()
     print("Se ha guardado la web en ", destino)
 
-def lista_to_dict(lista, key_value, num_atributos):
+def lista_to_dict(lista, key_value, num_atributos) -> dict:
     """Convierte una lista en un diccionario
 
     Args:
         lista: Lista a convertir
-        key_value: Tupla de atributos a usar como clave y valor
+        key_value: Indices de los atributos de la lista a usar como clave y valor en el diccionario
         num_atributos: Número de atributos de la lista
 
     Returns:
@@ -181,9 +242,34 @@ def lista_to_dict(lista, key_value, num_atributos):
     """
     diccionario = {}
     for i in range(0, len(lista), num_atributos):
-        diccionario[lista[i + key_value[0]]] = lista[i + key_value[1] - 1]
+        diccionario[lista[i + key_value[0]]] = lista[i + key_value[1]]
 
     return diccionario
+
+def lista_to_dict_vector_tupla(lista, key_value, num_atributos) -> dict:
+    """Convierte una lista en un diccionario
+
+    Args:
+        lista: Lista a convertir
+        key_value: Indices de los atributos de la lista a usar como clave y valor(tupla) en el diccionario
+        num_atributos: Número de atributos de la lista
+
+    Returns:
+        diccionario: Diccionario con clave-tupla
+    """
+    diccionario = {}
+    for i in range(0, len(lista), num_atributos):
+        tupla = (lista[i + key_value[1][0]], lista[i + key_value[1][1]])
+
+        #Si comunidad en diccionario, añadir provincia, sino crear comunidad y añadir provincia
+        if lista[i + key_value[0]] in diccionario:
+            diccionario[lista[i + key_value[0]]].append(tupla)
+        else:
+            diccionario[lista[i + key_value[0]]] = [tupla]
+
+    return diccionario
+
+
 def leerHtml(fichero):
     """
         Lee un fichero HTML y extrae los datos de las celdas
@@ -213,6 +299,40 @@ def leerHtml(fichero):
 
     return lista
 
+def csv_poblacion_to_numpy(csv_filtrado, filas, num_secciones, num_atributos) -> np.ndarray:
+    """Convierte un fichero CSV a un array de numpy
+
+    Args:
+        csv_filtrado: Fichero CSV con los datos de población
+        filas: Número de filas del fichero
+        secciones: Número de veces que se repiten los atributos (T-H-M)
+        atributos: Número de atributos del fichero (Cada año 2017-2010)
+
+    Returns:
+        poblacion: Array de numpy con los datos del fichero
+            La primera columna es el código de provincia, el resto son los datos de población
+    """
+    columnas = num_secciones * num_atributos + 1 #+1 para la columna del codigo de provincia
+    poblacionList = csv.reader(csv_filtrado, delimiter=';') #Lectura del csv como list
+    poblacion_np = np.zeros((filas, columnas), dtype=numpy.int_)
+
+    #Ignoro las dos primeras filas (Cabecera y Total Nacional)
+    poblacionList.__next__(); poblacionList.__next__();
+
+    for i in range(filas):
+        f_datos = poblacionList.__next__()
+
+        #Extraigo el código de la provincia
+        codigo_provincia = str(f_datos[0]).split(" ")[0] #Casteo para autocompletado (se puede quitar)
+
+        #Sustituyo el código de la provincia por el nombre de la provincia - Problema aparece como 2 en lugar de 02
+        f_datos[0] = int(codigo_provincia)
+
+        #Añado los datos de población al np.ndarray #Lo añado 1 a 1 porque tengo que castear los valores
+        for j in range(columnas):
+            poblacion_np[i][j] = float(f_datos[j])
+
+    return poblacion_np
 def ejercicio2():
     # Configuración de formato de números en output
     locale.setlocale(locale.LC_ALL, 'es_ES.utf8')
@@ -227,6 +347,11 @@ def ejercicio2():
     lista_comunidades = leerHtml(FICHERO_DATOS_ca)
     lista_provincias = leerHtml(FICHERO_DATOS_cap)
 
+    #Eliminar la fila de ""Ciudades autonomas"
+    lista_provincias_parte1 = lista_provincias[:-11]
+    lista_provincias_parte2 = lista_provincias[-8:]
+    lista_provincias = lista_provincias_parte1 + lista_provincias_parte2
+
     prepararCSV(FICHERO_DATOS_pp, DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
     crearHtml(FICHERO_SALIDA, DATOS_LIMPIOS, lista_comunidades, lista_provincias)
 
@@ -237,11 +362,25 @@ if __name__ == "__main__":  # Si lo ejecuto como fichero principal, se ejecuta l
     ejercicio2()
     # FICHERO_DATOS_ca = func.DIRECTORIO_ENTRADAS + "comunidadesAutonomas.htm"
     # # Pruebas
-    # datos = open(func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv", encoding="utf8")
-    # poblacionDict = csv.DictReader(datos, delimiter=';')
-    # print(poblacionDict.__next__())
+    datos = open(func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv", encoding="utf8")
+    # poblacionDict = csv.DictReader(datos, delimiter=';') #Lectura as dict
+    # print(poblacionDict.__next__()["Provincia"])
+    poblacionList = csv.reader(datos, delimiter=';') #Lectura as list
+    # print(poblacionList.__next__()[1:9])
+    # for reg in poblacionList:
+    #     a = reg
+    #     # print(reg)
+    #     a[0] = a[0].split(" ")[0]
+    #     print(a)
+
     # a = (poblacionDict.__next__())
     # atributos = [k for k in a.keys() if k != None]  # Las columnas sin nombre son = None, las descarto
     # print(atributos)
+
+    # SECCIONES = 3
+    # PROVINCIAS = 52
+    # ATRIBUTOS = 8 #2017-2010
+    # array_poblacion = csv_poblacion_to_numpy(datos, PROVINCIAS, SECCIONES, ATRIBUTOS)
+    # print(array_poblacion)
 
 
