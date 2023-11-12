@@ -2,4 +2,4 @@
 
 #Llamar al fichero R1.py
 import R1 as r1
-
+import R2 as r2

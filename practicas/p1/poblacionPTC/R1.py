@@ -146,7 +146,8 @@ def ejercicio1():
     #Borrar fichero temporal
     os.remove(DATOS_LIMPIOS)
 
-if __name__ == "R1":  # Cada vez que lo importe se ejecutará todo lo que esté aquí dentro
+if __name__ == "R1":  # Cada vez que lo importe se ejecutará  lo que esté aquí dentro
+    print("Importando/Ejecutando R1.py")
     ejercicio1()
 
 if __name__ == "__main__":  # Si lo ejecuto como fichero principal, se ejecuta lo que hay aquí dentro

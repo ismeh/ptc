@@ -17,12 +17,12 @@ R2. Usando el listado de comunidades autónomas que podemos obtener del fichero
 
 import csv
 import locale
-
 import numpy
 import numpy as np
+from bs4 import BeautifulSoup
 
 import funciones as func
-from bs4 import BeautifulSoup
+
 
 def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False):
     """Modifica un fichero csv para que solo contenga los datos relevantes de población de las provincias españolas
@@ -202,13 +202,6 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
         for comunidad in dic_ca:
             dic_pob_com[comunidad] = np.zeros(len(d_pob_prov[0])-1, dtype=numpy.int_) #Array de tantos datos como columnas en una fila(provincia) de los datos
 
-        # print("d_pob_prov-1", len(d_pob_prov)-1)
-        # print("d_provincia=d_pob_prov[0]-1", len(d_pob_prov[0])-1)
-        # print("npArray", np.shape(d_pob_prov))
-        # print("npArray fila datos", np.shape(d_pob_prov[0][1:]))
-        # print("dic_pob_com", len(dic_pob_com.values()))
-        # print("dic_pob_com[andalucia]", len(dic_pob_com["Andalucía"]))
-
         #Añado los valores a la estructura
         for d_provincia in d_pob_prov:
             codigo = codigo_to_str_x_digitos(d_provincia[0])
@@ -218,7 +211,6 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
 
         return dic_pob_com
     dic_pob_com = poblacion_comunidad(datos_poblacion_provincia, dic_ca, dic_ca_pro,dic_pro)
-    print(dic_pob_com["Andalucía"])
 
     #html
     paginaWeb = inicioHTML("Web 2", "../estilo2.css")
@@ -366,7 +358,8 @@ def ejercicio2():
     prepararCSV(FICHERO_DATOS_pp, DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
     crearHtml(FICHERO_SALIDA, DATOS_LIMPIOS, lista_comunidades, lista_provincias)
 
-if __name__ == "R1":  # Cada vez que lo importe se ejecutará todo lo que esté aquí dentro
+if __name__ == "R2":  # Cada vez que lo importe se ejecutará lo que esté aquí dentro
+    print("Importando/Ejecutando R2.py")
     ejercicio2()
 
 if __name__ == "__main__":  # Si lo ejecuto como fichero principal, se ejecuta lo que hay aquí dentro
