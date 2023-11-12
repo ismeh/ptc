@@ -14,5 +14,6 @@ Restricciones
 
 ---
 Estructuras de datos que he definido
-![imagen](https://github.com/ismeh/ptc/assets/81519191/26da43b6-08aa-4790-bed6-d3c9387d6925)
+![imagen](https://github.com/ismeh/ptc/assets/81519191/c6aa03cc-d7de-4a8d-b8ba-85d6ec4d56e1)
+
 
