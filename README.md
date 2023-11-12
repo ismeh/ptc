@@ -8,3 +8,11 @@ En está primera práctica usamos datos del INE sobre la población para acostum
 - matplotlib (Gráficas)
 - Otros modulos para gestión de ficheros y datos procedentes de webs
 
+---
+Restricciones
+ - No se puede usar pandas (estructura dataframe)
+
+---
+Estructuras de datos que he definido
+![imagen](https://github.com/ismeh/ptc/assets/81519191/26da43b6-08aa-4790-bed6-d3c9387d6925)
+
