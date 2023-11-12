@@ -104,8 +104,6 @@ def cuerpoHTML(SECCIONES, atributos, datos_com, lista_comunidades_original, dic_
     # Filas tabla
     # Primera fila IGNORAMOS TOTAL NACIONAL
     columnas_procesar = (len(atributos)) - 1#Ignoramos primera columna
-    print(len(atributos))
-    print(len(datos_com["Andalucía"]))
     # Resto de filas
     for n in range(len(datos_com)):
         comunidad_sin_espacio = lista_comunidades_original[n].replace(" ", "")
@@ -113,7 +111,7 @@ def cuerpoHTML(SECCIONES, atributos, datos_com, lista_comunidades_original, dic_
         for i in range(0, columnas_procesar):  # Empezamos desde la col 2017
             paginaWeb += "<td>%s</td>" % locale.currency(datos_com[comunidad_sin_espacio][i],
                 symbol=False,
-                grouping=True)  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
+                grouping=True)[:-3]  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
         paginaWeb += "</tr>"
     paginaWeb += "</table>"
 
@@ -155,14 +153,9 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     dic_ca = lista_to_dict(lista_comunidades, (1, 0), 2) #Key(comunidad) - Value(codigo comunidad)
     dic_pro= lista_to_dict(lista_provincias, (2, 3), 4) #Key(codigo provincia) - Value(provincia)
     dic_ca_pro = lista_to_dict_vector(lista_provincias, (1, 2), 4) #Key Comunidad- Valor Vector(Codigo Prov)
-    # print(dic_ca.items())
-    # print(dic_pro["04"])
-    # print(lista_comunidades_original_sin_codigo)
     PROVINCIAS = (dic_pro.values())
     datos_poblacion_provincia = csv_poblacion_to_numpy(ruta_datos, len(PROVINCIAS), len(SECCIONES), anios)
 
-    # for com in dic_ca_pro.values():
-    #     print(com)
     def poblacion_comunidad(d_pob_prov, dic_ca, dic_ca_pro, dic_pro):
         """Calcula la población de cada comunidad autónoma
 
@@ -228,18 +221,10 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     dic_pob_com = poblacion_comunidad(datos_poblacion_provincia, dic_ca, dic_ca_pro,dic_pro)
     print(dic_pob_com["Andalucía"])
 
-    # print(dic_ca["Andalucía"])
-    # print(dic_ca_pro)
-    # print(len((dic_ca_pro).values()))
-    # print(dic_ca_pro["Andalucía"])
-
-
     #html
     paginaWeb = inicioHTML("Web 2", "../estilo2.css")
     paginaWeb += cuerpoHTML(SECCIONES, atributos, dic_pob_com, lista_comunidades_original_sin_codigo, dic_ca)
     paginaWeb += finHTML()
-
-
 
     f.write(paginaWeb)
     fichero_csv.close()
