@@ -129,7 +129,7 @@ def imagenHTML(src, textAlt, dimensiones=(1280,1280)):
     """
 
     imagen = """<img src="%s" alt="%s" width="%s" height="%s">""" % (src, textAlt, dimensiones[0], dimensiones[1])
-
+    print("Añadida imagen" + src)
     return imagen
 def finHTML():
     """Crea el final del fichero HTML
@@ -244,17 +244,14 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
 
         return mPobTCom
     mPobTCom = media_poblacion_comunidad(dic_pob_com, 0, 8) #Dic Media de población de cada comunidad autónoma entre 2017 y 2010
-    # print(mPobTCom)
     """ Ordenar diccionario por valor
         -https://stackoverflow.com/questions/613183/how-do-i-sort-a-dictionary-by-value
         -https://www.w3schools.com/python/ref_func_sorted.asp
     """
     mPobTCom_orden_desc = (sorted(mPobTCom.items(), key=lambda item: item[1], reverse=True)) # Lista con las comunides ordenadas de mayor a menor población
-    # print(mPobTCom_orden_desc)
 
     com_orden_desc10MPobT = mPobTCom_orden_desc[:10] # Top 10 tuplas Comunidad-Poblacion
     com_orden_desc10MPobT = [tupla[0] for tupla in com_orden_desc10MPobT]  #Lista con las 10 comunidades con mayor población
-    # print(com_orden_desc10MPobT[:2])
     def grafica_barras(datos, orden_com, titulo, ruta, dic_cod_com, dic_ca):
         """Crea una gráfica de barras a partir de los datos
 
@@ -264,13 +261,9 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
         """
         comunidades_sin_cod = orden_com
         comunidades_con_cod = []
-        print(dic_cod_com)
 
         for com_rankin in orden_com:
             comunidades_con_cod.append(dic_ca[com_rankin] + " " + dic_cod_com[dic_ca[com_rankin]])
-            print(dic_cod_com[dic_ca[com_rankin]])
-
-        print(comunidades_con_cod)
 
         idx_H = 8
         idx_M = 16
@@ -286,9 +279,6 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
             datosH2017.append(datos[comunidad][idx_H])
 
         datosY = [datosH2017, datosM2017]
-        print((comunidades_con_cod))
-        print(len(datosM2017))
-        print(len(datosH2017))
 
         # plt.figure(figsize=(15, 15)) #No hace falta si al guardar uso bbox_inches='tight'
         for i in range(len(etiquetas)):
