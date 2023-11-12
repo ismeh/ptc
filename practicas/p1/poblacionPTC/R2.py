@@ -109,9 +109,8 @@ def cuerpoHTML(SECCIONES, atributos, datos_com, lista_comunidades_original, dic_
         comunidad_sin_espacio = lista_comunidades_original[n].replace(" ", "")
         paginaWeb += "<tr><td>%s</td>" % (dic_ca[comunidad_sin_espacio] + " " + lista_comunidades_original[n])
         for i in range(0, columnas_procesar):  # Empezamos desde la col 2017
-            paginaWeb += "<td>%s</td>" % locale.currency(datos_com[comunidad_sin_espacio][i],
-                symbol=False,
-                grouping=True)[:-3]  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
+            # Al tranformar el dato con locale, usamos %s para string en lugar de %f para float
+            paginaWeb += "<td>%s</td>" % locale.format_string('%.0f', datos_com[comunidad_sin_espacio][i], grouping=True)
         paginaWeb += "</tr>"
     paginaWeb += "</table>"
 
