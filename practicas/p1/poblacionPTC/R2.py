@@ -23,9 +23,6 @@ import numpy as np
 
 import funciones as func
 from bs4 import BeautifulSoup
-from lxml import html
-
-
 
 def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False):
     """Modifica un fichero csv para que solo contenga los datos relevantes de población de las provincias españolas
@@ -37,6 +34,7 @@ def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False)
         palabra_final: Palabra que indica el final de los datos
         verbose: Detalles del texto filtrado. Defaults to False.
     """
+    cabecera = "Provincia;T2017;T2016;T2015;T2014;T2013;T2012;T2011;T2010;H2017;H2016;H2015;H2014;H2013;H2012;H2011;H2010;M2017;M2016;M2015;M2014;M2013;M2012;M2011;M2010"
     archivo = open(fichero, "r", encoding="utf8")
     texto_archivo = archivo.read()
 
@@ -46,13 +44,13 @@ def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False)
     primero = texto_archivo.find(palabra_inicial)
     ultimo = texto_archivo.find(palabra_final)
     texto_final = texto_archivo[primero:ultimo]
+    texto_escrito = cabecera + '\n' + texto_final
 
     if verbose:
-        print("\nTexto filtrado: \n", texto_final)
+        print("\nTexto escrito: \n", texto_escrito)
 
-    cabecera = "Provincia;T2017;T2016;T2015;T2014;T2013;T2012;T2011;T2010;H2017;H2016;H2015;H2014;H2013;H2012;H2011;H2010;M2017;M2016;M2015;M2014;M2013;M2012;M2011;M2010"
     fichero_final = open(destino, "w", encoding="utf8")
-    fichero_final.write(cabecera + '\n' + texto_final)
+    fichero_final.write(texto_escrito)
     fichero_final.close()
 
     archivo.close()
@@ -78,7 +76,7 @@ def inicioHTML(nombre, estilo):
 
     return inicio
 
-def cuerpoHTML(SECCIONES, atributos, primera_fila, poblacionDict):
+def cuerpoHTML(SECCIONES, atributos, datos_com, lista_comunidades_original, dic_ca):
     """Crea el cuerpo del fichero HTML, es decir la tabla con los datos
 
     Returns:
@@ -105,23 +103,17 @@ def cuerpoHTML(SECCIONES, atributos, primera_fila, poblacionDict):
 
     # Filas tabla
     # Primera fila IGNORAMOS TOTAL NACIONAL
-    columnas_procesar = (len(atributos))
-
+    columnas_procesar = (len(atributos)) - 1#Ignoramos primera columna
+    print(len(atributos))
+    print(len(datos_com["Andalucía"]))
     # Resto de filas
-    for fila in poblacionDict:
-        paginaWeb += "<tr><td>%s</td>" % (fila[atributos[0]])
-        for j in range(len(SECCIONES)):
-            for i in range(1, columnas_procesar):  # Empezamos desde la col 2017
-                siguiente = i #cambiar esto
-                if j == 0:
-                    paginaWeb += "<td>%s</td>" % locale.currency(
-                        func.variacion_absoluta(float(fila[atributos[i]]), float(fila[atributos[siguiente]])),
-                        symbol=False,
-                        grouping=True)  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
-                else:
-                    paginaWeb += "<td>%s</td>" % locale.currency(
-                        func.variacion_relativa(float(fila[atributos[i]]), float(fila[atributos[siguiente]])),
-                        symbol=False, grouping=True)
+    for n in range(len(datos_com)):
+        comunidad_sin_espacio = lista_comunidades_original[n].replace(" ", "")
+        paginaWeb += "<tr><td>%s</td>" % (dic_ca[comunidad_sin_espacio] + " " + lista_comunidades_original[n])
+        for i in range(0, columnas_procesar):  # Empezamos desde la col 2017
+            paginaWeb += "<td>%s</td>" % locale.currency(datos_com[comunidad_sin_espacio][i],
+                symbol=False,
+                grouping=True)  # Al tranforma el dato con locale, usamos %s para string en lugar de %f para float
         paginaWeb += "</tr>"
     paginaWeb += "</table>"
 
@@ -159,13 +151,15 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     anios = 8 #2017-2010
 
     #Comunidades
+    lista_comunidades_original_sin_codigo = lista_comunidades[1::2]
     dic_ca = lista_to_dict(lista_comunidades, (1, 0), 2) #Key(comunidad) - Value(codigo comunidad)
     dic_pro= lista_to_dict(lista_provincias, (2, 3), 4) #Key(codigo provincia) - Value(provincia)
     dic_ca_pro = lista_to_dict_vector(lista_provincias, (1, 2), 4) #Key Comunidad- Valor Vector(Codigo Prov)
     # print(dic_ca.items())
     # print(dic_pro["04"])
-    PROVINCIAS = (dic_ca_pro.values())
-    array_poblacion_provincia = csv_poblacion_to_numpy(fichero_csv, len(PROVINCIAS), len(SECCIONES), anios)
+    # print(lista_comunidades_original_sin_codigo)
+    PROVINCIAS = (dic_pro.values())
+    datos_poblacion_provincia = csv_poblacion_to_numpy(ruta_datos, len(PROVINCIAS), len(SECCIONES), anios)
 
     # for com in dic_ca_pro.values():
     #     print(com)
@@ -231,7 +225,8 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
             dic_pob_com[com_actual] += d_provincia[1:]
 
         return dic_pob_com
-    dic_pob_com = poblacion_comunidad(array_poblacion_provincia, dic_ca, dic_ca_pro,dic_pro)
+    dic_pob_com = poblacion_comunidad(datos_poblacion_provincia, dic_ca, dic_ca_pro,dic_pro)
+    print(dic_pob_com["Andalucía"])
 
     # print(dic_ca["Andalucía"])
     # print(dic_ca_pro)
@@ -241,7 +236,7 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
 
     #html
     paginaWeb = inicioHTML("Web 2", "../estilo2.css")
-    paginaWeb += cuerpoHTML(SECCIONES, atributos, primera_fila, poblacionDict)
+    paginaWeb += cuerpoHTML(SECCIONES, atributos, dic_pob_com, lista_comunidades_original_sin_codigo, dic_ca)
     paginaWeb += finHTML()
 
 
@@ -253,6 +248,7 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
 
 def lista_to_dict(lista, key_value, num_atributos) -> dict:
     """Convierte una lista en un diccionario
+    Guardo tanto la key como los values como string sin espacio
 
     Args:
         lista: Lista a convertir
@@ -264,12 +260,15 @@ def lista_to_dict(lista, key_value, num_atributos) -> dict:
     """
     diccionario = {}
     for i in range(0, len(lista), num_atributos):
-        diccionario[lista[i + key_value[0]]] = lista[i + key_value[1]]
+        clave = lista[i + key_value[0]]
+        valor = lista[i + key_value[1]]
+        diccionario[str(clave).replace(" ", "")] = str(valor).replace(" ", "")
 
     return diccionario
 
 def lista_to_dict_vector(lista, key_value, num_atributos) -> dict:
     """Convierte una lista en un diccionario
+        Guardo tanto la key como los values como string sin espacio
 
     Args:
         lista: Lista a convertir
@@ -282,12 +281,15 @@ def lista_to_dict_vector(lista, key_value, num_atributos) -> dict:
     diccionario = {}
     for i in range(0, len(lista), num_atributos):
         valor = lista[i + key_value[1]]
+        valor = str(valor).replace(" ", "")
+        clave = lista[i + key_value[0]]
+        clave = str(clave).replace(" ", "")
 
         #Si comunidad existe en diccionario, añadir provincia, sino crear comunidad y añadir provincia
-        if lista[i + key_value[0]] in diccionario:
-            diccionario[lista[i + key_value[0]]].append(valor)
+        if clave in diccionario:
+            diccionario[clave].append(valor)
         else:
-            diccionario[lista[i + key_value[0]]] = [valor]
+            diccionario[clave] = [valor]
 
     return diccionario
 
@@ -321,11 +323,11 @@ def leerHtml(fichero):
 
     return lista
 
-def csv_poblacion_to_numpy(csv_filtrado, filas, num_secciones, num_atributos) -> np.ndarray:
+def csv_poblacion_to_numpy(ruta_csv_filtrado, filas, num_secciones, num_atributos) -> np.ndarray:
     """Convierte un fichero CSV a un array de numpy
 
     Args:
-        csv_filtrado: Fichero CSV con los datos de población
+        csv_filtrado: Ruta del fichero CSV con los datos de población
         filas: Número de filas del fichero
         secciones: Número de veces que se repiten los atributos (T-H-M)
         atributos: Número de atributos del fichero (Cada año 2017-2010)
@@ -334,15 +336,17 @@ def csv_poblacion_to_numpy(csv_filtrado, filas, num_secciones, num_atributos) ->
         poblacion: Array de numpy con los datos del fichero
             La primera columna es el código de provincia, el resto son los datos de población
     """
+    fichero_csv = open(ruta_csv_filtrado,
+                       encoding="utf8")  # Datos con las columnas con las que quiero trabajr, el resto = None (hombres y mujeres)
+    lectorLista = csv.reader(fichero_csv, delimiter=';') #Lectura del csv como list
     columnas = num_secciones * num_atributos + 1 #+1 para la columna del codigo de provincia
-    poblacionList = csv.reader(csv_filtrado, delimiter=';') #Lectura del csv como list
     poblacion_np = np.zeros((filas, columnas), dtype=numpy.int_)
 
     #Ignoro las dos primeras filas (Cabecera y Total Nacional)
-    poblacionList.__next__(); poblacionList.__next__();
+    lectorLista.__next__(); lectorLista.__next__();
 
     for i in range(filas):
-        f_datos = poblacionList.__next__()
+        f_datos = lectorLista.__next__()
 
         #Extraigo el código de la provincia
         codigo_provincia = str(f_datos[0]).split(" ")[0] #Casteo para autocompletado (se puede quitar)
@@ -354,6 +358,7 @@ def csv_poblacion_to_numpy(csv_filtrado, filas, num_secciones, num_atributos) ->
         for j in range(columnas):
             poblacion_np[i][j] = float(f_datos[j])
 
+    fichero_csv.close()
     return poblacion_np
 def ejercicio2():
     # Configuración de formato de números en output
