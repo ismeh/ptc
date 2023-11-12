@@ -5,6 +5,7 @@ También contiene algunas constantes comunes a todos los ejercicios
 """
 DIRECTORIO_ENTRADAS = "entradas/"
 DIRECTORIO_RESULTADOS = "resultados/"
+RUTA_ESTILO = "../" + DIRECTORIO_ENTRADAS
 
 # Funciones lambda para calcular variación absoluta y relativa
 variacion_absoluta = lambda actual, anterior: actual - anterior

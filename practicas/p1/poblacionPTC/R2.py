@@ -211,9 +211,9 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
 
         return dic_pob_com
     dic_pob_com = poblacion_comunidad(datos_poblacion_provincia, dic_ca, dic_ca_pro,dic_pro)
-
+    func.DIRECTORIO_ENTRADAS
     #html
-    paginaWeb = inicioHTML("Web 2", "../estilo2.css")
+    paginaWeb = inicioHTML("Web 2", func.RUTA_ESTILO + "estilo2.css")
     paginaWeb += cuerpoHTML(SECCIONES, atributos, dic_pob_com, lista_comunidades_original_sin_codigo, dic_ca)
     paginaWeb += finHTML()
 

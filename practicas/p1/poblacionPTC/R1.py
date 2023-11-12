@@ -65,10 +65,10 @@ def crearHtml(destino, ruta_datos):
     paginaPob = """
     <!DOCTYPE html><html>
     <head><title>Web 1</title>
-    <link rel="stylesheet" href="../estilo.css">
+    <link rel="stylesheet" href="%s">
     <meta charset="utf8"></head>
     <body>
-    """
+    """ % (func.RUTA_ESTILO + "estilo.css")
 
     # Tabla
     paginaPob += """<table>"""
