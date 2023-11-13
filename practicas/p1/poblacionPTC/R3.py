@@ -262,8 +262,14 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
         comunidades_sin_cod = orden_com
         comunidades_con_cod = []
 
+        #Solo el nombre bien escrito
         for com_rankin in orden_com:
-            comunidades_con_cod.append(dic_ca[com_rankin] + " " + dic_cod_com[dic_ca[com_rankin]])
+            comunidades_con_cod.append(dic_cod_com[dic_ca[com_rankin]])
+
+
+        # #Para añadir el código
+        # for com_rankin in orden_com:
+        #     comunidades_con_cod.append(dic_ca[com_rankin] + " " + dic_cod_com[dic_ca[com_rankin]])
 
         idx_H = 8
         idx_M = 16
@@ -303,7 +309,7 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     #html
     paginaWeb = inicioHTML("Web 2", func.RUTA_ESTILO + "estilo2.css")
     paginaWeb += cuerpoHTML(SECCIONES, atributos, dic_pob_com, lista_comunidades_original_sin_codigo, dic_ca) #Tabla
-    paginaWeb += imagenHTML(nombre_img, "Error al cargar la imagen") #Imagen
+    paginaWeb += imagenHTML(nombre_img, "Error al cargar la imagen", dimensiones=(720,720)) #Imagen
     paginaWeb += finHTML()
 
 
