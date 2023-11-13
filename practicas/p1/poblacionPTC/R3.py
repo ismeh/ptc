@@ -11,7 +11,6 @@ R3. Usando Matplotlib, para las 10 comunidades con más población media de 2010
     Resultado
         poblacionComAutonomas.html
         R3.png
-
 """
 
 import csv
