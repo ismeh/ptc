@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
 """
-R2. Usando el listado de comunidades autónomas que podemos obtener del fichero
-    comunidadesAutonomas.html, así como de las provincias de cada comunidad autónoma que podemos obtener de
-    comunidadAutonoma-Provincia.html y los datos de poblacionProvinciasHM2010-17.csv, hay que generar una página web 2
-    (fichero poblacionComAutonomas.html) con una tabla con los valores de población de cada comunidad autónoma en cada
-    año de 2010 a 2017, indicando también los valores desagregados por sexos (de manera semejante a como aparece en la
-    siguiente figura). Las celdas deben tener el contenido centrado.
+R5. Usando Matplotlib, para las 10 comunidades elegidas en el punto R3 generar un gráfico de líneas que refleje la
+    evolución de la población total de cada comunidad autónoma desde el año 2010 a 2017, salvar el gráfico
+     a fichero e incorporarlo a la página web 3 del punto R4.
 
     Ficheros Datos
         poblacionProvinciasHM2010-17.csv
@@ -13,7 +9,7 @@ R2. Usando el listado de comunidades autónomas que podemos obtener del fichero
         comunidadesAutonomas.html
 
     Resultado
-        poblacionComAutonomas.html
+        variacionComAutonomas.htm
 """
 
 import csv
@@ -21,63 +17,12 @@ import locale
 import numpy
 import numpy as np
 from bs4 import BeautifulSoup
+import matplotlib.pyplot as plt # Para la gráfica
 
 import funciones as func
 
 
-def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False):
-    """Modifica un fichero csv para que solo contenga los datos relevantes de población de las provincias españolas
-
-    Args:
-        fichero: Ruta del fichero
-        destino: Ruta del fichero de salida
-        palabra_inicial: Palabra que indica el inicio de los datos
-        palabra_final: Palabra que indica el final de los datos
-        verbose: Detalles del texto filtrado. Defaults to False.
-    """
-    cabecera = "Provincia;T2017;T2016;T2015;T2014;T2013;T2012;T2011;T2010;H2017;H2016;H2015;H2014;H2013;H2012;H2011;H2010;M2017;M2016;M2015;M2014;M2013;M2012;M2011;M2010"
-    archivo = open(fichero, "r", encoding="utf8")
-    texto_archivo = archivo.read()
-
-    if verbose:
-        print("\nTexto leido: \n", texto_archivo)
-
-    primero = texto_archivo.find(palabra_inicial)
-    ultimo = texto_archivo.find(palabra_final)
-    texto_final = texto_archivo[primero:ultimo]
-    texto_escrito = cabecera + '\n' + texto_final
-
-    if verbose:
-        print("\nTexto escrito: \n", texto_escrito)
-
-    fichero_final = open(destino, "w", encoding="utf8")
-    fichero_final.write(texto_escrito)
-    fichero_final.close()
-
-    archivo.close()
-
-def inicioHTML(nombre, estilo):
-    """Crea el inicio del fichero HTML
-
-    Args:
-        nombre: Nombre de la web
-        estilo: Ruta del fichero CSS
-
-    Returns:
-        inicio: Inicio del fichero HTML
-    """
-
-    inicio = """
-    <!DOCTYPE html><html>
-    <head><title>%s</title>
-    <link rel="stylesheet" href=%s>
-    <meta charset="utf8"></head>
-    <body>
-    """ % (nombre, estilo)
-
-    return inicio
-
-def cuerpoHTML(SECCIONES, atributos, datos_com, lista_comunidades_original, dic_ca):
+def cuerpoHTML(SECCIONES, SUB_SECCIONES, SECCIONES_CSV, secciones_bajo_cabeceras, atributos, dic_variacion_comunidades, datos_com, lista_comunidades_original, dic_ca):
     """Crea el cuerpo del fichero HTML, es decir la tabla con los datos
 
     Returns:
@@ -87,47 +32,49 @@ def cuerpoHTML(SECCIONES, atributos, datos_com, lista_comunidades_original, dic_
     # Tabla
     paginaWeb = """<table>"""
 
-    # Cabecera de la tabla
-    paginaWeb += """<tr>
-            <th rowspan=2>CCAA</th>
-            <th colspan={0}>Total</th>
+    #Años
+    num_secciones_bajo_cabecera = len(secciones_bajo_cabeceras)
+
+    # Cabeceras de la tabla
+    paginaWeb += """
+            <tr>
+            <th></th>
+            <th colspan={0}>Variación Absoluta</th>
+            <th colspan={0}>Variación Relativa</th>
+            </tr>
+        """.format((num_secciones_bajo_cabecera-1)*len(SUB_SECCIONES))
+    paginaWeb += "<tr> <th></th>"
+    for seccion in SECCIONES:
+        paginaWeb += """
             <th colspan={0}>Hombres</th>
             <th colspan={0}>Mujeres</th>
-            </tr>
-            <tr>
-        """.format((len(atributos) - 1)/len(SECCIONES))  # -1 para quitar el primer atributo
+        """.format(num_secciones_bajo_cabecera-1)
+    paginaWeb += "</tr>"
 
     # for header in range(len(SECCIONES)):
-    for atr in atributos[1:]:  # Años Variación absoluta, -1 para no añadir 2010
-        paginaWeb += "<th>%s</th>" % (atr[1:]) #Reemplazar la letra por un vacio
+    paginaWeb += "<tr> <th></th>"
+    for headers in range(len(SECCIONES)*len(SUB_SECCIONES)):
+        for atr in atributos[1:num_secciones_bajo_cabecera]:
+            paginaWeb += "<th>%s</th>" % (atr[1:]) #Reemplazar la letra por un vacio
     paginaWeb += "</tr>"
 
     # Filas tabla
-    # Primera fila IGNORAMOS TOTAL NACIONAL
-    columnas_procesar = (len(atributos)) - 1#Ignoramos primera columna
-    # Resto de filas
-    for n in range(len(datos_com)):
+    columnas_procesar = (num_secciones_bajo_cabecera - 1)*len(SECCIONES)*len(SUB_SECCIONES)
+    for n in range(len(dic_variacion_comunidades)):
         comunidad_sin_espacio = lista_comunidades_original[n].replace(" ", "")
-        paginaWeb += "<tr><td>%s</td>" % (dic_ca[comunidad_sin_espacio] + " " + lista_comunidades_original[n])
+        paginaWeb += "<tr><td>%s</td>" % (lista_comunidades_original[n]) #Comunidad sin codigo
         for i in range(0, columnas_procesar):  # Empezamos desde la col 2017
             # Al tranformar el dato con locale, usamos %s para string en lugar de %f para float
-            paginaWeb += "<td>%s</td>" % locale.format_string('%.0f', datos_com[comunidad_sin_espacio][i], grouping=True)
+            if(i < columnas_procesar/2):
+                paginaWeb += "<td>%s</td>" % locale.format_string('%.0f', dic_variacion_comunidades[comunidad_sin_espacio][i], grouping=True)
+            else:
+                paginaWeb += "<td>%s</td>" % locale.format_string('%.2f', dic_variacion_comunidades[comunidad_sin_espacio][i], grouping=True)
         paginaWeb += "</tr>"
     paginaWeb += "</table>"
 
 
     return paginaWeb
 
-def finHTML():
-    """Crea el final del fichero HTML
-
-    Returns:
-        fin: Final del fichero HTML
-    """
-
-    fin = """</body></html>"""
-
-    return fin
 def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     """Crea el fichero HTML con los datos de población (variación absoluta y relativa)
 
@@ -145,18 +92,22 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     poblacionDict = csv.DictReader(fichero_csv, delimiter=';')  # Lector
     primera_fila = poblacionDict.__next__()  # Primera fila de datos, para sacar los atributos
     atributos = [k for k in primera_fila.keys() if k != None]  # Las columnas sin nombre son = None, las descarto
-    SECCIONES = ["Total", "Hombre", "Mujer"]
-    anios = 8 #2017-2010
+    SECCIONES = ["Variación absoluta", "Variación relativa"]
+    SUB_SECCIONES = ["Hombre", "Mujer"]
+    SECCIONES_CSV = ["T", "H", "M"]
+    secciones_bajo_cabeceras = int((len(atributos)-1)/len(SECCIONES_CSV)) #años=8
+    secciones_bajo_cabeceras = atributos[1:secciones_bajo_cabeceras+1] # T2017-T2010
 
     #Comunidades
     lista_comunidades_original_sin_codigo = lista_comunidades[1::2]
+    dic_cod_com = lista_to_dict_con_espacios(lista_comunidades, (0, 1), 2) #Key(codigo comunidad) - Value(comunidad) Bien escrito
     dic_ca = lista_to_dict(lista_comunidades, (1, 0), 2) #Key(comunidad) - Value(codigo comunidad)
     dic_pro= lista_to_dict(lista_provincias, (2, 3), 4) #Key(codigo provincia) - Value(provincia)
     dic_ca_pro = lista_to_dict_vector(lista_provincias, (1, 2), 4) #Key Comunidad- Valor Vector(Codigo Prov)
     PROVINCIAS = (dic_pro.values())
-    datos_poblacion_provincia = csv_poblacion_to_numpy(ruta_datos, len(PROVINCIAS), len(SECCIONES), anios)
+    datos_poblacion_provincia = csv_poblacion_to_numpy(ruta_datos, len(PROVINCIAS), len(SECCIONES_CSV), len(secciones_bajo_cabeceras))
 
-    def poblacion_comunidad(d_pob_prov, dic_ca, dic_ca_pro, dic_pro):
+    def poblacion_comunidad(d_pob_prov, dic_ca, dic_ca_pro, dic_pro) -> dict:
         """Calcula la población de cada comunidad autónoma
 
         Args:
@@ -211,18 +162,137 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
             dic_pob_com[com_actual] += d_provincia[1:]
 
         return dic_pob_com
-    dic_pob_com = poblacion_comunidad(datos_poblacion_provincia, dic_ca, dic_ca_pro,dic_pro)
+    dic_pob_com = poblacion_comunidad(datos_poblacion_provincia, dic_ca, dic_ca_pro,dic_pro) #Datos de población de cada comunidad autónoma
+
+    def media_poblacion_comunidad(diccionario_pob_com, inicio, fin) -> dict:
+        """Calcula la media de población de cada comunidad autónoma
+
+        Args:
+            diccionario_pob_com: Diccionario con la población de cada comunidad autónoma por años
+            inicio: Indice del Año inicial
+            fin: Indice del Año final
+
+        Returns:
+            mPobTCom: Diccionario con la media de población de cada comunidad autónoma
+        """
+        mPobTCom = {}
+        for comunidad in diccionario_pob_com:
+            mPobTCom[comunidad] = np.mean(diccionario_pob_com[comunidad][inicio:fin])
+
+        return mPobTCom
+
+    mPobTCom = media_poblacion_comunidad(dic_pob_com, 0,
+                                         8)  # Dic Media de población de cada comunidad autónoma entre 2017 y 2010
+    """ Ordenar diccionario por valor
+        -https://stackoverflow.com/questions/613183/how-do-i-sort-a-dictionary-by-value
+        -https://www.w3schools.com/python/ref_func_sorted.asp
+    """
+    mPobTCom_orden_desc = (sorted(mPobTCom.items(), key=lambda item: item[1],
+                                  reverse=True))  # Lista con las comunides ordenadas de mayor a menor población
+
+    com_orden_desc10MPobT = mPobTCom_orden_desc[:10]  # Top 10 tuplas Comunidad-Poblacion
+    com_orden_desc10MPobT = [tupla[0] for tupla in
+                             com_orden_desc10MPobT]  # Lista con las 10 comunidades con mayor población
+
+    def variacion_comunidades(poblacion_comunidades, secciones_bajo_cabecera) -> dict:
+        """Calcula la variación de población de las comunidades autónomas para hombres y mujeres entre 2010 y 2017
+
+        Args:
+            poblacion_comunidades: Diccionario con la población de cada comunidad autónoma
+            secciones_bajo_cabecera: Años de los datos del csv de población (2010-2017)
+        Returns:
+            variacion_comunidades: Diccionario con la variación absoluta y relativa de población de cada comunidad autónoma
+        """
+        variacion_comunidades = {}
+        columna_inicial = len(secciones_bajo_cabecera) #Para saltarnos el total
+        for comunidad in poblacion_comunidades:
+            var_abs = np.zeros((len(secciones_bajo_cabecera) - 1) * 2, dtype=numpy.float32)
+            var_rel = np.zeros((len(secciones_bajo_cabecera) - 1) * 2, dtype=numpy.float32)
+
+            def variacion(funcion, almacenamiento):
+                for anio in range(0, len(secciones_bajo_cabecera)-1):
+                    almacenamiento[anio] = funcion(poblacion_comunidades[comunidad][anio + columna_inicial],
+                                                    poblacion_comunidades[comunidad][anio+1 + columna_inicial])
+                    almacenamiento[anio + len(secciones_bajo_cabecera)-1] = funcion(
+                                                    poblacion_comunidades[comunidad][anio + columna_inicial*2],
+                                                    poblacion_comunidades[comunidad][anio + columna_inicial*2+1])
+            variacion(func.variacion_absoluta, var_abs)
+            variacion(func.variacion_relativa, var_rel)
+
+            var_combinada = np.concatenate((var_abs, var_rel), axis=0)
+
+            variacion_comunidades[comunidad] = var_combinada
+
+        return variacion_comunidades
+    dic_variacion_comunidades = variacion_comunidades(dic_pob_com, secciones_bajo_cabeceras)
+
+    def grafica_lineas(datos, orden_com, titulo, ruta, dic_cod_com, dic_ca):
+        """Crea una gráfica de lineas a partir de los datos
+
+        Args:
+            datos: Datos de la gráfica
+                Diccionario con datos de las poblacion en las comunidades
+        """
+        comunidades_sin_cod = orden_com
+        output_comunidades = []
+
+        #Solo el nombre bien escrito
+        for com_rankin in orden_com:
+            output_comunidades.append(dic_cod_com[dic_ca[com_rankin]])
+
+        # #Para añadir el código
+        # for com_rankin in orden_com:
+        #     output_comunidades.append(dic_ca[com_rankin] + " " + dic_cod_com[dic_ca[com_rankin]])
+
+        ejeX = np.arange(2010,2018)
+        etiquetas = output_comunidades
+        # colores =  ['b', 'orange', 'g', 'm', 'c']
+
+        for comunidad in comunidades_sin_cod:
+            evolucionY = datos[comunidad][7::-1] #2010-2017
+            plt.plot(ejeX, evolucionY, marker='o')
+
+        #Leyenda
+        plt.legend(labels=etiquetas, loc="center left", bbox_to_anchor=(1, 0.5))
+        plt.title(titulo)
+        plt.savefig(ruta, bbox_inches='tight')
+        plt.close()
+
+    nombre_img = "R5.png"
+    src_img = func.DIRECTORIO_IMAGENES + nombre_img
+    grafica_lineas(dic_pob_com, com_orden_desc10MPobT, "Población total en 2010-2017 (CCAA)", src_img, dic_cod_com, dic_ca)
+    ruta_img_respecto_html = "../" + src_img
 
     #html
-    paginaWeb = inicioHTML("Web 2", func.RUTA_ESTILO + "estilo2.css")
-    paginaWeb += cuerpoHTML(SECCIONES, atributos, dic_pob_com, lista_comunidades_original_sin_codigo, dic_ca)
-    paginaWeb += finHTML()
+    paginaWeb = func.inicioHTML("Web 3", func.RUTA_ESTILO + "estilo2.css")
+    paginaWeb += cuerpoHTML(SECCIONES, SUB_SECCIONES, SECCIONES_CSV, secciones_bajo_cabeceras, atributos, dic_variacion_comunidades, dic_pob_com, lista_comunidades_original_sin_codigo, dic_ca) #Tabla
+    paginaWeb += func.imagenHTML(ruta_img_respecto_html, "Error al cargar la imagen", dimensiones=(720,720)) #Imagen
+    paginaWeb += func.finHTML()
 
     f.write(paginaWeb)
     fichero_csv.close()
     f.close()
     print("Se ha guardado la web en ", destino)
 
+def lista_to_dict_con_espacios(lista, key_value, num_atributos) -> dict:
+    """Convierte una lista en un diccionario
+        Guardo tanto la key como los values como string sin espacio
+
+        Args:
+            lista: Lista a convertir
+            key_value: Indices de los atributos de la lista a usar como clave y valor en el diccionario
+            num_atributos: Número de atributos de la lista
+
+        Returns:
+            diccionario: Diccionario con los datos de la lista
+        """
+    diccionario = {}
+    for i in range(0, len(lista), num_atributos):
+        clave = lista[i + key_value[0]]
+        valor = lista[i + key_value[1]]
+        diccionario[str(clave).replace(" ", "")] = str(valor)
+
+    return diccionario
 def lista_to_dict(lista, key_value, num_atributos) -> dict:
     """Convierte una lista en un diccionario
     Guardo tanto la key como los values como string sin espacio
@@ -270,7 +340,6 @@ def lista_to_dict_vector(lista, key_value, num_atributos) -> dict:
 
     return diccionario
 
-
 def leerHtml(fichero):
     """
         Lee un fichero HTML y extrae los datos de las celdas
@@ -299,7 +368,6 @@ def leerHtml(fichero):
     # celdas = tree.xpath('//td/text()')
 
     return lista
-
 def csv_poblacion_to_numpy(ruta_csv_filtrado, filas, num_secciones, num_atributos) -> np.ndarray:
     """Convierte un fichero CSV a un array de numpy
 
@@ -337,12 +405,12 @@ def csv_poblacion_to_numpy(ruta_csv_filtrado, filas, num_secciones, num_atributo
 
     fichero_csv.close()
     return poblacion_np
-def ejercicio2():
+def ejercicio5():
     # Configuración de formato de números en output
     locale.setlocale(locale.LC_ALL, 'es_ES.utf8')
 
     # Constantes - Datos
-    FICHERO_SALIDA = func.DIRECTORIO_RESULTADOS + "poblacionComAutonomas.html"
+    FICHERO_SALIDA = func.DIRECTORIO_RESULTADOS + "variacionComAutonomas.html"
 
     lista_comunidades = leerHtml(func.FICHERO_DATOS_ca)
     lista_provincias = leerHtml(func.FICHERO_DATOS_cap)
@@ -352,36 +420,14 @@ def ejercicio2():
     lista_provincias_parte2 = lista_provincias[-8:]
     lista_provincias = lista_provincias_parte1 + lista_provincias_parte2
 
-    prepararCSV(func.FICHERO_DATOS_pp, func.DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
+    func.prepararCSV(func.FICHERO_DATOS_pp, func.DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
     crearHtml(FICHERO_SALIDA, func.DATOS_LIMPIOS, lista_comunidades, lista_provincias)
 
-if __name__ == "R2":  # Cada vez que lo importe se ejecutará lo que esté aquí dentro
-    print("Importando/Ejecutando R2.py")
-    ejercicio2()
+if __name__ == "R5":  # Cada vez que lo importe se ejecutará lo que esté aquí dentro
+    print("Importando/Ejecutando R5.py")
+    ejercicio5()
 
 if __name__ == "__main__":  # Si lo ejecuto como fichero principal, se ejecuta lo que hay aquí dentro
-    ejercicio2()
-    # FICHERO_DATOS_ca = func.DIRECTORIO_ENTRADAS + "comunidadesAutonomas.htm"
-    # # Pruebas
-    datos = open(func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv", encoding="utf8")
-    # poblacionDict = csv.DictReader(datos, delimiter=';') #Lectura as dict
-    # print(poblacionDict.__next__()["Provincia"])
-    poblacionList = csv.reader(datos, delimiter=';') #Lectura as list
-    # print(poblacionList.__next__()[1:9])
-    # for reg in poblacionList:
-    #     a = reg
-    #     # print(reg)
-    #     a[0] = a[0].split(" ")[0]
-    #     print(a)
-
-    # a = (poblacionDict.__next__())
-    # atributos = [k for k in a.keys() if k != None]  # Las columnas sin nombre son = None, las descarto
-    # print(atributos)
-
-    # SECCIONES = 3
-    # PROVINCIAS = 52
-    # ATRIBUTOS = 8 #2017-2010
-    # array_poblacion = csv_poblacion_to_numpy(datos, PROVINCIAS, SECCIONES, ATRIBUTOS)
-    # print(array_poblacion)
+    ejercicio5()
 
 

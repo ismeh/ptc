@@ -5,10 +5,8 @@ R1. Calcular la variación de la población por provincias desde el año 2011 a 
 """
 import csv
 import locale
-import os
 
 import funciones as func
-
 
 def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False):
     """Modifica un fichero csv para que solo contenga los datos relevantes de población de las provincias españolas
@@ -41,7 +39,6 @@ def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False)
 
     archivo.close()
 
-
 def crearHtml(destino, ruta_datos):
     """Crea el fichero HTML con los datos de población (variación absoluta y relativa)
 
@@ -68,7 +65,7 @@ def crearHtml(destino, ruta_datos):
     <link rel="stylesheet" href="%s">
     <meta charset="utf8"></head>
     <body>
-    """ % (func.RUTA_ESTILO + "estilo.css")
+    """ % (func.RUTA_ESTILO + "estilo2.css")
 
     # Tabla
     paginaPob += """<table>"""
@@ -132,19 +129,15 @@ def crearHtml(destino, ruta_datos):
     f.close()
     print("Se ha guardado la web en ", destino)
 
-
 def ejercicio1():
     locale.setlocale(locale.LC_ALL, 'es_ES.utf8')
 
-    NOMBRE_WEB1 = "variacionProvincias.html"
     FICHERO_DATOS = func.DIRECTORIO_ENTRADAS + "poblacionProvinciasHM2010-17.csv"
     DATOS_LIMPIOS = func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv"
+    FICHERO_SALIDA = func.DIRECTORIO_RESULTADOS + "variacionProvincias.html"
 
     prepararCSV(FICHERO_DATOS, DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
-    crearHtml(func.DIRECTORIO_RESULTADOS + NOMBRE_WEB1, DATOS_LIMPIOS)
-
-    #Borrar fichero temporal
-    os.remove(DATOS_LIMPIOS)
+    crearHtml(FICHERO_SALIDA, DATOS_LIMPIOS)
 
 if __name__ == "R1":  # Cada vez que lo importe se ejecutará  lo que esté aquí dentro
     print("Importando/Ejecutando R1.py")

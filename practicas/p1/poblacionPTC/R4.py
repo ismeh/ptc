@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 R4. Generar una página web 3 (fichero variacionComAutonomas.html) con una tabla
 con la variación de población por comunidades autónomas desde el año 2011 a 2017,
@@ -22,59 +23,6 @@ from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt # Para la gráfica
 
 import funciones as func
-
-
-def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False):
-    """Modifica un fichero csv para que solo contenga los datos relevantes de población de las provincias españolas
-
-    Args:
-        fichero: Ruta del fichero
-        destino: Ruta del fichero de salida
-        palabra_inicial: Palabra que indica el inicio de los datos
-        palabra_final: Palabra que indica el final de los datos
-        verbose: Detalles del texto filtrado. Defaults to False.
-    """
-    cabecera = "Provincia;T2017;T2016;T2015;T2014;T2013;T2012;T2011;T2010;H2017;H2016;H2015;H2014;H2013;H2012;H2011;H2010;M2017;M2016;M2015;M2014;M2013;M2012;M2011;M2010"
-    archivo = open(fichero, "r", encoding="utf8")
-    texto_archivo = archivo.read()
-
-    if verbose:
-        print("\nTexto leido: \n", texto_archivo)
-
-    primero = texto_archivo.find(palabra_inicial)
-    ultimo = texto_archivo.find(palabra_final)
-    texto_final = texto_archivo[primero:ultimo]
-    texto_escrito = cabecera + '\n' + texto_final
-
-    if verbose:
-        print("\nTexto escrito: \n", texto_escrito)
-
-    fichero_final = open(destino, "w", encoding="utf8")
-    fichero_final.write(texto_escrito)
-    fichero_final.close()
-
-    archivo.close()
-
-def inicioHTML(nombre, estilo):
-    """Crea el inicio del fichero HTML
-
-    Args:
-        nombre: Nombre de la web
-        estilo: Ruta del fichero CSS
-
-    Returns:
-        inicio: Inicio del fichero HTML
-    """
-
-    inicio = """
-    <!DOCTYPE html><html>
-    <head><title>%s</title>
-    <link rel="stylesheet" href=%s>
-    <meta charset="utf8"></head>
-    <body>
-    """ % (nombre, estilo)
-
-    return inicio
 
 def cuerpoHTML(SECCIONES, SUB_SECCIONES, SECCIONES_CSV, secciones_bajo_cabeceras, atributos, dic_variacion_comunidades, datos_com, lista_comunidades_original, dic_ca):
     """Crea el cuerpo del fichero HTML, es decir la tabla con los datos
@@ -129,30 +77,6 @@ def cuerpoHTML(SECCIONES, SUB_SECCIONES, SECCIONES_CSV, secciones_bajo_cabeceras
 
     return paginaWeb
 
-def imagenHTML(src, textAlt, dimensiones=(1280,1280)):
-    """Crea una imagen HTML
-
-    Args:
-        src: Ruta de la imagen
-        textAlt: Texto alternativo de la imagen
-
-    Returns:
-        imagen: Imagen HTML
-    """
-
-    imagen = """<img src="%s" alt="%s" width="%s" height="%s">""" % (src, textAlt, dimensiones[0], dimensiones[1])
-    print("Añadida imagen" + src)
-    return imagen
-def finHTML():
-    """Crea el final del fichero HTML
-
-    Returns:
-        fin: Final del fichero HTML
-    """
-
-    fin = """</body></html>"""
-
-    return fin
 def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     """Crea el fichero HTML con los datos de población (variación absoluta y relativa)
 
@@ -275,9 +199,9 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     dic_variacion_comunidades = variacion_comunidades(dic_pob_com, secciones_bajo_cabeceras)
 
     #html
-    paginaWeb = inicioHTML("Web 3", func.RUTA_ESTILO + "estilo2.css")
+    paginaWeb = func.inicioHTML("Web 3", func.RUTA_ESTILO + "estilo2.css")
     paginaWeb += cuerpoHTML(SECCIONES, SUB_SECCIONES, SECCIONES_CSV, secciones_bajo_cabeceras, atributos, dic_variacion_comunidades, dic_pob_com, lista_comunidades_original_sin_codigo, dic_ca) #Tabla
-    paginaWeb += finHTML()
+    paginaWeb += func.finHTML()
 
     f.write(paginaWeb)
     fichero_csv.close()
@@ -420,22 +344,18 @@ def ejercicio4():
     locale.setlocale(locale.LC_ALL, 'es_ES.utf8')
 
     # Constantes - Datos
-    FICHERO_DATOS_pp = func.DIRECTORIO_ENTRADAS + "poblacionProvinciasHM2010-17.csv"
-    FICHERO_DATOS_ca = func.DIRECTORIO_ENTRADAS + "comunidadesAutonomas.htm"
-    FICHERO_DATOS_cap = func.DIRECTORIO_ENTRADAS + "comunidadAutonoma-Provincia.htm"
-    DATOS_LIMPIOS = func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv"
     FICHERO_SALIDA = func.DIRECTORIO_RESULTADOS + "variacionComAutonomas.html"
 
-    lista_comunidades = leerHtml(FICHERO_DATOS_ca)
-    lista_provincias = leerHtml(FICHERO_DATOS_cap)
+    lista_comunidades = leerHtml(func.FICHERO_DATOS_ca)
+    lista_provincias = leerHtml(func.FICHERO_DATOS_cap)
 
     #Eliminar la fila de ""Ciudades autonomas"
     lista_provincias_parte1 = lista_provincias[:-11]
     lista_provincias_parte2 = lista_provincias[-8:]
     lista_provincias = lista_provincias_parte1 + lista_provincias_parte2
 
-    prepararCSV(FICHERO_DATOS_pp, DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
-    crearHtml(FICHERO_SALIDA, DATOS_LIMPIOS, lista_comunidades, lista_provincias)
+    func.prepararCSV(func.FICHERO_DATOS_pp, func.DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
+    crearHtml(FICHERO_SALIDA, func.DATOS_LIMPIOS, lista_comunidades, lista_provincias)
 
 if __name__ == "R4":  # Cada vez que lo importe se ejecutará lo que esté aquí dentro
     print("Importando/Ejecutando R4.py")

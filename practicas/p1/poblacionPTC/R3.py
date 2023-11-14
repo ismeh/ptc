@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 R3. Usando Matplotlib, para las 10 comunidades con más población media de 2010 a 2017, generar un gráfico de columnas
     que indique la población de hombres y mujeres en el año 2017, salvar el gráfico a fichero e incorporarlo a la
@@ -21,59 +22,6 @@ from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt # Para la gráfica
 
 import funciones as func
-
-
-def prepararCSV(fichero, destino, palabra_inicial, palabra_final, verbose=False):
-    """Modifica un fichero csv para que solo contenga los datos relevantes de población de las provincias españolas
-
-    Args:
-        fichero: Ruta del fichero
-        destino: Ruta del fichero de salida
-        palabra_inicial: Palabra que indica el inicio de los datos
-        palabra_final: Palabra que indica el final de los datos
-        verbose: Detalles del texto filtrado. Defaults to False.
-    """
-    cabecera = "Provincia;T2017;T2016;T2015;T2014;T2013;T2012;T2011;T2010;H2017;H2016;H2015;H2014;H2013;H2012;H2011;H2010;M2017;M2016;M2015;M2014;M2013;M2012;M2011;M2010"
-    archivo = open(fichero, "r", encoding="utf8")
-    texto_archivo = archivo.read()
-
-    if verbose:
-        print("\nTexto leido: \n", texto_archivo)
-
-    primero = texto_archivo.find(palabra_inicial)
-    ultimo = texto_archivo.find(palabra_final)
-    texto_final = texto_archivo[primero:ultimo]
-    texto_escrito = cabecera + '\n' + texto_final
-
-    if verbose:
-        print("\nTexto escrito: \n", texto_escrito)
-
-    fichero_final = open(destino, "w", encoding="utf8")
-    fichero_final.write(texto_escrito)
-    fichero_final.close()
-
-    archivo.close()
-
-def inicioHTML(nombre, estilo):
-    """Crea el inicio del fichero HTML
-
-    Args:
-        nombre: Nombre de la web
-        estilo: Ruta del fichero CSS
-
-    Returns:
-        inicio: Inicio del fichero HTML
-    """
-
-    inicio = """
-    <!DOCTYPE html><html>
-    <head><title>%s</title>
-    <link rel="stylesheet" href=%s>
-    <meta charset="utf8"></head>
-    <body>
-    """ % (nombre, estilo)
-
-    return inicio
 
 def cuerpoHTML(SECCIONES, atributos, datos_com, lista_comunidades_original, dic_ca):
     """Crea el cuerpo del fichero HTML, es decir la tabla con los datos
@@ -116,30 +64,6 @@ def cuerpoHTML(SECCIONES, atributos, datos_com, lista_comunidades_original, dic_
 
     return paginaWeb
 
-def imagenHTML(src, textAlt, dimensiones=(1280,1280)):
-    """Crea una imagen HTML
-
-    Args:
-        src: Ruta de la imagen
-        textAlt: Texto alternativo de la imagen
-
-    Returns:
-        imagen: Imagen HTML
-    """
-
-    imagen = """<img src="%s" alt="%s" width="%s" height="%s">""" % (src, textAlt, dimensiones[0], dimensiones[1])
-    print("Añadida imagen" + src)
-    return imagen
-def finHTML():
-    """Crea el final del fichero HTML
-
-    Returns:
-        fin: Final del fichero HTML
-    """
-
-    fin = """</body></html>"""
-
-    return fin
 def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
     """Crea el fichero HTML con los datos de población (variación absoluta y relativa)
 
@@ -265,7 +189,6 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
         for com_rankin in orden_com:
             comunidades_con_cod.append(dic_cod_com[dic_ca[com_rankin]])
 
-
         # #Para añadir el código
         # for com_rankin in orden_com:
         #     comunidades_con_cod.append(dic_ca[com_rankin] + " " + dic_cod_com[dic_ca[com_rankin]])
@@ -296,20 +219,20 @@ def crearHtml(destino, ruta_datos, lista_comunidades, lista_provincias):
         plt.legend(labels=etiquetas)
 
         plt.xticks(rotation=80)
-        plt.ylabel("Población")
         plt.title(titulo)
         plt.savefig(ruta, bbox_inches='tight')
         plt.close()
 
     nombre_img = "R3.png"
-    src_img = func.DIRECTORIO_RESULTADOS + nombre_img
+    src_img = func.DIRECTORIO_IMAGENES + nombre_img
     grafica_barras(dic_pob_com, com_orden_desc10MPobT, "Población por sexo en el año 2017", src_img, dic_cod_com, dic_ca)
+    ruta_img_respecto_html = "../" + src_img
 
     #html
-    paginaWeb = inicioHTML("Web 2", func.RUTA_ESTILO + "estilo2.css")
+    paginaWeb = func.inicioHTML("Web 2", func.RUTA_ESTILO + "estilo2.css")
     paginaWeb += cuerpoHTML(SECCIONES, atributos, dic_pob_com, lista_comunidades_original_sin_codigo, dic_ca) #Tabla
-    paginaWeb += imagenHTML(nombre_img, "Error al cargar la imagen", dimensiones=(720,720)) #Imagen
-    paginaWeb += finHTML()
+    paginaWeb += func.imagenHTML(ruta_img_respecto_html, "Error al cargar la imagen", dimensiones=(720,720)) #Imagen
+    paginaWeb += func.finHTML()
 
 
 
@@ -456,22 +379,18 @@ def ejercicio3():
     locale.setlocale(locale.LC_ALL, 'es_ES.utf8')
 
     # Constantes - Datos
-    FICHERO_DATOS_pp = func.DIRECTORIO_ENTRADAS + "poblacionProvinciasHM2010-17.csv"
-    FICHERO_DATOS_ca = func.DIRECTORIO_ENTRADAS + "comunidadesAutonomas.htm"
-    FICHERO_DATOS_cap = func.DIRECTORIO_ENTRADAS + "comunidadAutonoma-Provincia.htm"
-    DATOS_LIMPIOS = func.DIRECTORIO_ENTRADAS + "poblacionPruebaFinal.csv"
     FICHERO_SALIDA = func.DIRECTORIO_RESULTADOS + "poblacionComAutonomas.html"
 
-    lista_comunidades = leerHtml(FICHERO_DATOS_ca)
-    lista_provincias = leerHtml(FICHERO_DATOS_cap)
+    lista_comunidades = leerHtml(func.FICHERO_DATOS_ca)
+    lista_provincias = leerHtml(func.FICHERO_DATOS_cap)
 
     #Eliminar la fila de ""Ciudades autonomas"
     lista_provincias_parte1 = lista_provincias[:-11]
     lista_provincias_parte2 = lista_provincias[-8:]
     lista_provincias = lista_provincias_parte1 + lista_provincias_parte2
 
-    prepararCSV(FICHERO_DATOS_pp, DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
-    crearHtml(FICHERO_SALIDA, DATOS_LIMPIOS, lista_comunidades, lista_provincias)
+    func.prepararCSV(func.FICHERO_DATOS_pp, func.DATOS_LIMPIOS, "Total Nacional", "Notas", verbose=False)
+    crearHtml(FICHERO_SALIDA, func.DATOS_LIMPIOS, lista_comunidades, lista_provincias)
 
 if __name__ == "R3":  # Cada vez que lo importe se ejecutará lo que esté aquí dentro
     print("Importando/Ejecutando R3.py")
