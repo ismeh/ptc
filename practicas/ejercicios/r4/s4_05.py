@@ -42,8 +42,15 @@ def traspuesta(matriz):
             traspuesta[i].append(matriz[j][i])
     return traspuesta
 
+def traspuesta2(matriz):
+    traspuesta = ([[matriz[j][i] for j in range(len(matriz))] for i in range(len(matriz[0]))])
+
+    return traspuesta
+
 #Salida de datos
 print("Matriz original:")
 mostrar_matriz(lista)
 print("Matriz traspuesta:")
 mostrar_matriz(traspuesta(lista))
+print("Matriz traspuesta2:")
+mostrar_matriz(traspuesta2(lista))

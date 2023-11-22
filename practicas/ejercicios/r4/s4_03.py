@@ -21,18 +21,23 @@ for i in range(1, n+1):
 #Función 1
 def min_max(lista):
     minimo = lista[0]
+    idx_minimo = 0
     maximo = lista[0]
-    for i in lista:
-        if i < minimo:
-            minimo = i
-        if i > maximo:
-            maximo = i
-    return minimo, maximo
+    idx_max = 0
+    for i,numero in enumerate(lista):
+        if numero < minimo:
+            minimo = numero
+            idx_minimo = i
+        if numero > maximo:
+            maximo = numero
+            idx_max = i
+    return (minimo, idx_minimo), (maximo, idx_max)
 
 #Función 2
 def min_max2(lista):
-    return min(lista), max(lista)
+    return (min(lista), lista.index(min(lista))), (max(lista), lista.index(max(lista)))
 
 #Salida de datos
-print("El mínimo y el máximo de la lista son: ", min_max(lista))
-print("El mínimo y el máximo de la lista son: ", min_max2(lista))
+print("Lista: ", lista)
+print("El mínimo y el máximo de la lista son: ", min_max(lista)[0], min_max(lista)[1], "en las posiciones", min_max(lista)[0][1], min_max(lista)[1][1])
+print("El mínimo y el máximo de la lista son: ", min_max2(lista)[0], min_max2(lista)[1], "en las posiciones", min_max2(lista)[0][1], min_max2(lista)[1][1])
