@@ -43,7 +43,12 @@ def traspuesta(matriz):
     return traspuesta
 
 def traspuesta2(matriz):
-    traspuesta = ([[matriz[j][i] for j in range(len(matriz))] for i in range(len(matriz[0]))])
+    num_filas = len(matriz)
+    num_columnas = len(matriz[0])
+    traspuesta = ([[matriz[i][j] for i in range(num_filas)] for j in range(num_columnas)])
+    print(len(matriz))
+    print(len(matriz[0]))
+
 
     return traspuesta
 

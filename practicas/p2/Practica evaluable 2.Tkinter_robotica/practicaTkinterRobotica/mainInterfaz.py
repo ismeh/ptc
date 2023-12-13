@@ -1,66 +1,128 @@
 # -*- coding: utf-8 -*-
-
+import os.path
+# import sim #Para ubuntu
+import sim #Para windows
+import sys
 from tkinter import *
+from tkinter import messagebox
+
 import parametros as p
-
-def onClickConectarSim():
-    print("onClickConectarSim")
-    p.textLabelEstado = "Estado: Conectado con CoppeliaSim"
-
-
-def onClickDetenerSim():
-    print("onClickDetenerSim")
-
-def onClickCapturar():
-    print("onClickCapturar")
-
-def onClickAgrupar():
-    print("onClickAgrupar")
-
-def onClickExtraerCaracteristicas():
-    print("onClickExtraerCaracteristicas")
-
-def onClickEntrenarClasificador():
-    print("onClickEntrenarClasificador")
-
-def onClickPredecir():
-    print("onClickPredecir")
-
-def onClickSalir():
-    print("onClickSalir")
-
-def onClickCambiar():
-    print("onClickCambiar")
-    p.val_iteraciones = int(entryIter.get())
-    p.val_cerca = float(entryCerca.get())
-    p.val_media = float(entryMedia.get())
-    p.val_lejos = float(entryLejos.get())
-    p.val_minPuntos = int(entryMinPuntos.get())
-    p.val_maxPuntos = int(entryMaxPuntos.get())
-    p.val_umbralDistancia = float(entryUmbralDistancia.get())
-
-
-def onClickDebug(listaBotones):
-    print("onClickDebug")
-    activarBotones(listaBotones)
-
-def desactivarBotones(listaBotones):
-    for boton in listaBotones:
-        boton.config(state=DISABLED)
-
-def activarBotones(listaBotones):
-    for boton in listaBotones:
-        boton.config(state=NORMAL)
+import capturar
 
 def main():
+    def crearDirectorios():
+        for i in range(1, 7):
+            os.makedirs("negativo" + str(i), exist_ok=True)
+            os.makedirs("positivo" + str(i), exist_ok=True)
+
+        os.makedirs("prediccion", exist_ok=True)
+        print("Directorios creados")
+    def onClickConectarSim():
+        sim.simxFinish(-1)  # Terminar todas las conexiones
+        p.clientID = sim.simxStart('127.0.0.1', 19999, True, True, 5000,
+                                  5)  # Iniciar una nueva conexion en el puerto 19999 (direccion por defecto)
+
+        if p.clientID != -1:
+            print('Conexion establecida')
+            btnCapturar.config(state=NORMAL)
+            btnDetenerSim.config(state=NORMAL)
+        else:
+            sys.exit("Error: no se puede conectar. Tienes que iniciar la simulación antes de llamar a este script.")
+        p.textLabelEstado = "Estado: Conectado con CoppeliaSim"
+        p.estado = p.Estado.conectado
+
+
+    def onClickDetenerSim():
+        # detenemos la simulacion
+        sim.simxStopSimulation(p.clientID, sim.simx_opmode_oneshot_wait)
+
+        # cerramos la conexion
+        sim.simxFinish(p.clientID)
+
+        btnCapturar.config(state=DISABLED)
+        btnDetenerSim.config(state=DISABLED)
+        p.textLabelEstado = "Estado: Desconectado de CoppeliaSim"
+        messagebox.showinfo("Práctica PTC Tkinter Robótica",
+                            "Se ha detenido la simulación y se ha desconectado de CoppeliaSim")
+        p.estado = p.Estado.desconectado
+
+    def onClickCapturar():
+        fichero = listboxFicheros.get(ANCHOR)
+
+        if fichero == "":
+            messagebox.showwarning("Práctica PTC Tkinter Robótica", "Debe elegir un fichero de la lista")
+        else:
+            # Comprobar existencia del fichero
+            if os.path.exists(fichero):
+                if messagebox.askyesno("Práctica PTC Tkinter Robótica",
+                                    f"El fichero: {fichero} ya existe. Se creará de nuevo. ¿Está seguro?"):
+                    capturar.main(fichero)
+            else:
+                if messagebox.askyesno("Práctica PTC Tkinter Robótica",
+                                    f"Se va a crear el fichero: {fichero} ¿Está seguro?"):
+                    capturar.main(fichero)
+
+    def onClickAgrupar():
+        # Llamar a script Agrupar.py
+        # agrupar.main()
+        btnExtraerCaracteristicas.config(state=NORMAL)
+        print("onClickAgrupar")
+
+    def onClickExtraerCaracteristicas():
+        print("onClickExtraerCaracteristicas")
+
+    def onClickEntrenarClasificador():
+        print("onClickEntrenarClasificador")
+
+    def onClickPredecir():
+        print("onClickPredecir")
+
+    def onClickSalir():
+        if p.estado == p.Estado.conectado:
+            messagebox.showwarning("Práctica PTC Tkinter Robótica",
+                                   "Debe detener la simulación y desconectar de CoppeliaSim antes de salir")
+        else:
+            if messagebox.askyesno("Práctica PTC Tkinter Robótica", "¿Está seguro de que desea salir?"):
+                sys.exit("Cerrando interfaz")
+
+    def onClickCambiar():
+        p.val_iteraciones = int(entryIter.get())
+        p.val_cerca = float(entryCerca.get())
+        p.val_media = float(entryMedia.get())
+        p.val_lejos = float(entryLejos.get())
+        p.val_minPuntos = int(entryMinPuntos.get())
+        p.val_maxPuntos = int(entryMaxPuntos.get())
+        p.val_umbralDistancia = float(entryUmbralDistancia.get())
+
+        print(p.val_iteraciones)
+        print(p.val_cerca)
+        print(p.val_media)
+        print(p.val_lejos)
+        print(p.val_minPuntos)
+        print(p.val_maxPuntos)
+        print(p.val_umbralDistancia)
+
+    def onClickDebug():
+        activarBotones()
+
+    def desactivarBotones(listaBotones):
+        for boton in listaBotones:
+            boton.config(state=DISABLED)
+
+    def activarBotones():
+        listaBotones = [btnDetenerSim, btnCapturar, btnAgrupar, btnExtraerCaracteristicas, btnEntrenarClasificador,
+                        btnPredecir]
+        for boton in listaBotones:
+            boton.config(state=NORMAL)
+
     r = 0 #Fila actual
     c = 0 #Columna actual
-    global entryIter, entryCerca, entryMedia, entryLejos, entryMinPuntos, entryMaxPuntos, entryUmbralDistancia
     width_entry_box = 6
 
     root = Tk()
     root.geometry("700x300")
     root.title("Práctica PTC Tkinter Robótica")
+    crearDirectorios()
 
     #Columna 0
     labelInicial = Label(root, text="Es necesario ejecutar el simulador CoppeliaSim")
