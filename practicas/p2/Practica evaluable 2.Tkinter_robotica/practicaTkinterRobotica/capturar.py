@@ -15,6 +15,44 @@ import parametros as p
     Importante: La escena tiene que estar ejecutándose en el simulador (Usar botón PLAY)
 """
 def main(src):
+    str_objeto = ""
+    distancia_inicial = 0
+    # mostramos el directorio de trabajo y vemos si existe el dir para salvar los datos
+    print("Directorio de trabajo inicial: ", os.getcwd())
+
+    # Cambiar directorio de trabajo
+    directorio = src.split("/")[0]
+    fichero = src.split("/")[1]
+
+    parte_inicial_fich = fichero[:5]
+    parte_final_fich = fichero[-10:-5]
+    print(parte_inicial_fich, parte_final_fich)
+
+    #Ajustamos el objeto
+    if parte_inicial_fich == "enPie":
+        str_objeto = "Bill#0" #Nombre de la persona de pie
+    elif parte_inicial_fich == "senta":
+        str_objeto = "Bill#1" #Nombre de la persona sentada
+    else:
+        str_objeto = "Cylinder" #Cilindro
+
+    #Ajustamos la distancia inicial
+    if parte_final_fich == "Cerca":
+        distancia_inicial = p.val_cerca
+    elif parte_final_fich == "Media":
+        distancia_inicial = p.val_media
+    else:
+        distancia_inicial = p.val_lejos
+
+    print("Distancia inicial:", distancia_inicial)
+    print("Objeto: ", str_objeto)
+    f = open(fichero, "w")
+    f.close()
+
+    os.chdir(directorio)
+    print("Cambiando el directorio de trabajo: ", os.getcwd())
+
+
     # Guardar la referencia al robot
     _, robothandle = vrep.simxGetObjectHandle(p.clientID, 'Pioneer_p3dx', vrep.simx_opmode_oneshot_wait)
 
@@ -41,19 +79,6 @@ def main(src):
     plt.axis('equal')
     plt.axis([0, 4, -2, 2])
 
-    # mostramos el directorio de trabajo y vemos si existe el dir para salvar los datos
-    print("Directorio de trabajo inicial: ", os.getcwd())
-
-    #Cambiar directorio de trabajo
-    directorio = src.split("/")[0]
-    fichero = src.split("/")[1]
-
-    f = open(fichero, "w")
-    f.close()
-
-    os.chdir(directorio)
-    print("Cambiando el directorio de trabajo: ", os.getcwd())
-
     # Creamos el fichero JSON para guardar los datos del laser
     # usamos diccionarios
     segundos = 0.5
@@ -72,7 +97,7 @@ def main(src):
     while (iteracion <= maxIter and seguir):
 
         # Situamos donde queremos a la persona sentada, unidades en metros
-        returnCode = vrep.simxSetObjectPosition(p.clientID, personhandle, -1, [1 + 2.0 * iteracion / 10, -0.4, 0.0],
+        returnCode = vrep.simxSetObjectPosition(p.clientID, personhandle, -1, [distancia_inicial + 2.0 * iteracion / 10, -0.4, 0.0],
                                                 vrep.simx_opmode_oneshot)
         # Cambiamos la orientacion, ojo está en radianes: Para pasar de grados a radianes hay que multiplicar por PI y dividir por 180
         returnCode = vrep.simxSetObjectOrientation(p.clientID, personhandle, -1, [0.0, 0.0, 3.05 - (0.20) * iteracion],
