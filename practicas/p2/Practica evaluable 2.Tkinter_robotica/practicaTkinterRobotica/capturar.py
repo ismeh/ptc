@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import random
 import vrep
 import sys
 import cv2
@@ -16,6 +17,9 @@ import parametros as p
 """
 def main(src):
     str_objeto = ""
+    ficheroTTT = ""
+    z = 0
+
     distancia_inicial = 0
     # mostramos el directorio de trabajo y vemos si existe el dir para salvar los datos
     print("Directorio de trabajo inicial: ", os.getcwd())
@@ -31,27 +35,36 @@ def main(src):
     #Ajustamos el objeto
     if parte_inicial_fich == "enPie":
         str_objeto = "Bill#0" #Nombre de la persona de pie
+        ficheroTTT = "en_pie.ttt"
     elif parte_inicial_fich == "senta":
-        str_objeto = "Bill#1" #Nombre de la persona sentada
+        str_objeto = "Bill" #Nombre de la persona sentada
+        ficheroTTT = "sentado.ttt"
+    elif "cilindroMenor" in fichero:
+        str_objeto = "Cylinder0" #Cilindro
+        ficheroTTT = "cilindro_menor.ttt"
+        z=-0.25
     else:
-        str_objeto = "Cylinder" #Cilindro
+        str_objeto = "Cylinder"  # Cilindro
+        ficheroTTT = "cilindro_mayor.ttt"
+        z=-0.25
+
 
     #Ajustamos la distancia inicial
     if parte_final_fich == "Cerca":
-        distancia_inicial = p.val_cerca
+        minimo = p.val_cerca
+        maximo = p.val_media
     elif parte_final_fich == "Media":
-        distancia_inicial = p.val_media
+        minimo = p.val_media
+        maximo = p.val_lejos
     else:
-        distancia_inicial = p.val_lejos
+        minimo = p.val_lejos
+        maximo = p.val_lejos + 1
 
     print("Distancia inicial:", distancia_inicial)
     print("Objeto: ", str_objeto)
-    f = open(fichero, "w")
-    f.close()
 
     os.chdir(directorio)
     print("Cambiando el directorio de trabajo: ", os.getcwd())
-
 
     # Guardar la referencia al robot
     _, robothandle = vrep.simxGetObjectHandle(p.clientID, 'Pioneer_p3dx', vrep.simx_opmode_oneshot_wait)
@@ -68,9 +81,9 @@ def main(src):
 
     velocidad = 0  # Variable para la velocidad de los motores, dejamos fijo el robot
 
-    # obtenermos la referencia a la persona sentada Bill para moverla
+    # obtenermos la referencia al str_objeto para moverla
 
-    _, personhandle = vrep.simxGetObjectHandle(p.clientID, 'Bill#0', vrep.simx_opmode_oneshot_wait)
+    _, personhandle = vrep.simxGetObjectHandle(p.clientID, str_objeto, vrep.simx_opmode_oneshot_wait)
 
     # Iniciar la camara y esperar un segundo para llenar el buffer
     _, resolution, image = vrep.simxGetVisionSensorImage(p.clientID, camhandle, 0, vrep.simx_opmode_streaming)
@@ -88,16 +101,25 @@ def main(src):
     cabecera = {"TiempoSleep": segundos,
                 "MaxIteraciones": maxIter}
 
-    ficheroLaser = open("datosLaser.json", "w")
+    ficheroLaser = open(fichero, "w")
+    print("Creado fichero: ", fichero)
+
+    os.chdir('..')
+    print("Volviendo al directorio: ", os.getcwd())
 
     ficheroLaser.write(json.dumps(cabecera) + '\n')
 
     seguir = True
 
     while (iteracion <= maxIter and seguir):
+        #Posición del objeto
+        x = random.uniform(minimo, maximo)
+        y = x/100
+
+        posicion = [x, y, z]
 
         # Situamos donde queremos a la persona sentada, unidades en metros
-        returnCode = vrep.simxSetObjectPosition(p.clientID, personhandle, -1, [distancia_inicial + 2.0 * iteracion / 10, -0.4, 0.0],
+        returnCode = vrep.simxSetObjectPosition(p.clientID, personhandle, -1, posicion,
                                                 vrep.simx_opmode_oneshot)
         # Cambiamos la orientacion, ojo está en radianes: Para pasar de grados a radianes hay que multiplicar por PI y dividir por 180
         returnCode = vrep.simxSetObjectOrientation(p.clientID, personhandle, -1, [0.0, 0.0, 3.05 - (0.20) * iteracion],
@@ -151,12 +173,15 @@ def main(src):
     # detenemos la simulacion
     vrep.simxStopSimulation(p.clientID, vrep.simx_opmode_oneshot_wait)
 
-    # cerramos la conexion
-    vrep.simxFinish(p.clientID)
-
     # cerramos las ventanas
     cv2.destroyAllWindows()
 
     finFichero = {"Iteraciones totales": iteracion - 1}
     ficheroLaser.write(json.dumps(finFichero) + '\n')
     ficheroLaser.close()
+
+    # Copiamos el fichero ttt correspondiente en el directorio
+    # os.system("cp " + ficheroTTT + " " + directorio)  # ubuntu
+    os.system("copy " + ficheroTTT + " " + directorio)  # windows
+
+
