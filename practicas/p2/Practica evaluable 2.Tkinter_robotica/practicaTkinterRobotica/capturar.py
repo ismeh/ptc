@@ -104,8 +104,7 @@ def main(src):
     ficheroLaser = open(fichero, "w")
     print("Creado fichero: ", fichero)
 
-    os.chdir('..')
-    print("Volviendo al directorio: ", os.getcwd())
+
 
     ficheroLaser.write(json.dumps(cabecera) + '\n')
 
@@ -179,6 +178,9 @@ def main(src):
     finFichero = {"Iteraciones totales": iteracion - 1}
     ficheroLaser.write(json.dumps(finFichero) + '\n')
     ficheroLaser.close()
+
+    os.chdir('..')
+    print("Volviendo al directorio: ", os.getcwd())
 
     # Copiamos el fichero ttt correspondiente en el directorio
     # os.system("cp " + ficheroTTT + " " + directorio)  # ubuntu
