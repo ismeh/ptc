@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 import random
 import vrep
 import sys
@@ -22,7 +23,7 @@ def main(src):
 
     distancia_inicial = 0
     # mostramos el directorio de trabajo y vemos si existe el dir para salvar los datos
-    print("Directorio de trabajo inicial: ", os.getcwd())
+    print("Directorio de trabajo inicial: ", os.getcwd()[-p.longitud_output:])
 
     # Cambiar directorio de trabajo
     directorio = src.split("/")[0]
@@ -40,7 +41,7 @@ def main(src):
         str_objeto = "Bill" #Nombre de la persona sentada
         ficheroTTT = "sentado.ttt"
     elif "cilindroMenor" in fichero:
-        str_objeto = "Cylinder0" #Cilindro
+        str_objeto = "Cylinder1" #Cilindro
         ficheroTTT = "cilindro_menor.ttt"
         z=-0.25
     else:
@@ -64,7 +65,7 @@ def main(src):
     print("Objeto: ", str_objeto)
 
     os.chdir(directorio)
-    print("Cambiando el directorio de trabajo: ", os.getcwd())
+    print("Cambiando el directorio de trabajo: ", os.getcwd()[-p.longitud_output:])
 
     # Guardar la referencia al robot
     _, robothandle = vrep.simxGetObjectHandle(p.clientID, 'Pioneer_p3dx', vrep.simx_opmode_oneshot_wait)
@@ -113,7 +114,10 @@ def main(src):
     while (iteracion <= maxIter and seguir):
         #Posición del objeto
         x = random.uniform(minimo, maximo)
-        y = x/100
+
+        # calcula la posición en y para que no se salga del radio de 90
+        cateto_opuesto = (math.tan(math.pi / 4) * x)
+        y = random.uniform(-cateto_opuesto, cateto_opuesto)
 
         posicion = [x, y, z]
 
@@ -170,7 +174,7 @@ def main(src):
         iteracion = iteracion + 1
 
     # detenemos la simulacion
-    vrep.simxStopSimulation(p.clientID, vrep.simx_opmode_oneshot_wait)
+    # vrep.simxStopSimulation(p.clientID, vrep.simx_opmode_oneshot_wait)
 
     # cerramos las ventanas
     cv2.destroyAllWindows()
@@ -180,7 +184,7 @@ def main(src):
     ficheroLaser.close()
 
     os.chdir('..')
-    print("Volviendo al directorio: ", os.getcwd())
+    print("Volviendo al directorio: ", os.getcwd()[-p.longitud_output:])
 
     # Copiamos el fichero ttt correspondiente en el directorio
     # os.system("cp " + ficheroTTT + " " + directorio)  # ubuntu

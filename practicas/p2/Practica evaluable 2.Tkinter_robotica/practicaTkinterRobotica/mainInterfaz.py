@@ -8,6 +8,7 @@ from tkinter import messagebox
 
 import parametros as p
 import capturar
+import agrupar
 
 def main():
     def crearDirectorios():
@@ -57,24 +58,32 @@ def main():
                 if messagebox.askyesno("Práctica PTC Tkinter Robótica",
                                     f"El fichero: {fichero} ya existe. Se creará de nuevo. ¿Está seguro?"):
                     capturar.main(fichero)
+                    btnAgrupar.config(state=NORMAL)
+
             else:
                 if messagebox.askyesno("Práctica PTC Tkinter Robótica",
                                     f"Se va a crear el fichero: {fichero} ¿Está seguro?"):
                     capturar.main(fichero)
+                    btnAgrupar.config(state=NORMAL)
+
 
     def onClickAgrupar():
-        # Llamar a script Agrupar.py
-        # agrupar.main()
-        btnExtraerCaracteristicas.config(state=NORMAL)
         print("onClickAgrupar")
+        agrupar.main()
+        btnExtraerCaracteristicas.config(state=NORMAL)
 
     def onClickExtraerCaracteristicas():
         print("onClickExtraerCaracteristicas")
+        #.main()
+        btnEntrenarClasificador.config(state=NORMAL)
 
     def onClickEntrenarClasificador():
+        # .main()
+        btnPredecir.config(state=NORMAL)
         print("onClickEntrenarClasificador")
 
     def onClickPredecir():
+        # .main()
         print("onClickPredecir")
 
     def onClickSalir():
@@ -120,7 +129,7 @@ def main():
     width_entry_box = 6
 
     root = Tk()
-    root.geometry("700x300")
+    root.geometry("700x320") #300
     root.title("Práctica PTC Tkinter Robótica")
     crearDirectorios()
 
