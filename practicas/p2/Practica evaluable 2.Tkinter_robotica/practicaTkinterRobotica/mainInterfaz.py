@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os.path
-# import sim #Para ubuntu
-import sim #Para windows
+import vrep #Para ubuntu
+# import sim #Para windows
 import sys
 from tkinter import *
 from tkinter import messagebox
@@ -9,6 +9,9 @@ from tkinter import messagebox
 import parametros as p
 import capturar
 import agrupar
+import caracteristicas
+import clasificarSVM
+import predecir
 
 def main():
     def crearDirectorios():
@@ -19,8 +22,8 @@ def main():
         os.makedirs("prediccion", exist_ok=True)
         print("Directorios creados")
     def onClickConectarSim():
-        sim.simxFinish(-1)  # Terminar todas las conexiones
-        p.clientID = sim.simxStart('127.0.0.1', 19999, True, True, 5000,
+        vrep.simxFinish(-1)  # Terminar todas las conexiones
+        p.clientID = vrep.simxStart('127.0.0.1', 19999, True, True, 5000,
                                   5)  # Iniciar una nueva conexion en el puerto 19999 (direccion por defecto)
 
         if p.clientID != -1:
@@ -35,10 +38,10 @@ def main():
 
     def onClickDetenerSim():
         # detenemos la simulacion
-        sim.simxStopSimulation(p.clientID, sim.simx_opmode_oneshot_wait)
+        vrep.simxStopSimulation(p.clientID, vrep.simx_opmode_oneshot_wait)
 
         # cerramos la conexion
-        sim.simxFinish(p.clientID)
+        vrep.simxFinish(p.clientID)
 
         btnCapturar.config(state=DISABLED)
         btnDetenerSim.config(state=DISABLED)
@@ -68,23 +71,19 @@ def main():
 
 
     def onClickAgrupar():
-        print("onClickAgrupar")
         agrupar.main()
         btnExtraerCaracteristicas.config(state=NORMAL)
 
     def onClickExtraerCaracteristicas():
-        print("onClickExtraerCaracteristicas")
-        #.main()
+        caracteristicas.main()
         btnEntrenarClasificador.config(state=NORMAL)
 
     def onClickEntrenarClasificador():
-        # .main()
+        clasificarSVM.main()
         btnPredecir.config(state=NORMAL)
-        print("onClickEntrenarClasificador")
 
     def onClickPredecir():
-        # .main()
-        print("onClickPredecir")
+        predecir.main()
 
     def onClickSalir():
         if p.estado == p.Estado.conectado:
@@ -112,9 +111,14 @@ def main():
         print(p.val_umbralDistancia)
 
     def onClickDebug():
-        activarBotones()
+        if btnPredecir['state'] == DISABLED:
+            activarBotones()
+        else:
+            desactivarBotones()
 
-    def desactivarBotones(listaBotones):
+    def desactivarBotones():
+        listaBotones = [btnDetenerSim, btnCapturar, btnAgrupar, btnExtraerCaracteristicas, btnEntrenarClasificador,
+                        btnPredecir]
         for boton in listaBotones:
             boton.config(state=DISABLED)
 
@@ -258,7 +262,7 @@ def main():
     for fichero in listaFicheros:
         listboxFicheros.insert(END, fichero)
 
-    desactivarBotones([btnDetenerSim, btnCapturar, btnAgrupar, btnExtraerCaracteristicas, btnEntrenarClasificador, btnPredecir])
+    desactivarBotones()
     # print(btnAgrupar.config().keys())
 
     root.mainloop() #Event Listener, Bucle infinito

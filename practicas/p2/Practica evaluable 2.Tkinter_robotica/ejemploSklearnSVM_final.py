@@ -54,7 +54,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, rand
 
 ''' Veamos la diferencia entre usar un kernel lineal, polinómico o radial
 ir a 
-https://medium.com/all-things-ai/in-depth-parameter-tuning-for-svc-758215394769
+    https://medium.com/all-things-ai/in-depth-parameter-tuning-for-svc-758215394769
 
 KERNEL LINEAL
 '''
@@ -342,17 +342,6 @@ prediccion=clasificador.predict(carDataF)
 print("Prediccion con entradas falsas es", prediccion)
 
 #genera resultados falsos
-
-
-
-
-
-
-
-
-
-
-
 
 
 #más información para optimizar los parámetros

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import glob
 import json
 import os
@@ -23,7 +24,7 @@ def distancia_euclidea(p1, p2):
 def agrupacion_por_distancia_salto(puntos, umbralDist):
     clusters = []
     cluster = [puntos[0]]
-    puntos_actuales = 0
+    puntos_actuales = 1
     for punto in puntos[1:]:
         if (distancia_euclidea(punto, cluster[-1]) < umbralDist) and puntos_actuales < MaxPuntos:
             cluster.append(punto)
@@ -43,8 +44,9 @@ def agrupacion_por_distancia_salto(puntos, umbralDist):
     return clusters
 
 def main():
-    # mostramos el directorio de trabajo y leemeos los datos del primero
-    print("Directorio de trabajo es: ", os.getcwd()[-p.longitud_output:])
+    if p.debug_directorios:
+        # mostramos el directorio de trabajo y leemeos los datos del primero
+        print("Directorio de trabajo es: ", os.getcwd()[-p.longitud_output:])
 
     directorios_pos = sorted(glob.glob("positivo*"))
     directorios_neg = sorted(glob.glob("negativo*"))
@@ -72,13 +74,20 @@ def main():
             objetos = []
             clusters_json = []
 
-            os.chdir(directorio)
-            print("Cambiando el directorio de trabajo a: ", os.getcwd()[-p.longitud_output:])
+            if p.debug_directorios:
+                os.chdir(directorio)
+                print("Cambiando el directorio de trabajo a: ", os.getcwd()[-p.longitud_output:])
+            else:
+                os.chdir(directorio)
 
             if len(glob.glob("*.json")) == 0:
-                print("No hay ficheros JSON en el directorio: ", directorio)
-                os.chdir("..")
-                print("Volviendo al directorio anterior: ", os.getcwd())
+                if p.debug_directorios:
+                    print("No hay ficheros JSON en el directorio: ", directorio)
+                    os.chdir("..")
+                    print("Volviendo al directorio anterior: ", os.getcwd())
+                else:
+                    os.chdir("..")
+
             else:
                 # Leemos el fichero JSON de la captura de datos
                 with open(glob.glob("*.json")[0], 'r') as f:
@@ -90,29 +99,42 @@ def main():
                 # maxIter = cabecera['MaxIteraciones']
 
 
-                iterTotalesDict = objetos[len(objetos) - 1]
+                if len(objetos) == 0:
+                    print("No hay datos en el fichero JSON: ", glob.glob("*.json")[0])
+                    if p.debug_directorios:
+                        os.chdir("..")
+                        print("Volviendo al directorio anterior: ", os.getcwd())
+                    else:
+                        os.chdir("..")
 
-                iterTotales = iterTotalesDict['Iteraciones totales']
+                else:
+                    iterTotalesDict = objetos[len(objetos) - 1]
 
-                # plt.axis('equal')
-                # plt.axis([0, 4, -2, 2])
+                    iterTotales = iterTotalesDict['Iteraciones totales']
 
-                #Para cada iteración del json
-                for i in range(iterTotales):
-                    puntos = []
-                    #Agrupo los puntos de una iteración de la captura de datos
-                    for j in range(len(objetos[i + 1]['PuntosX'])):
-                        puntos.append((objetos[i + 1]['PuntosX'][j], objetos[i + 1]['PuntosY'][j]))
+                    # plt.axis('equal')
+                    # plt.axis([0, 4, -2, 2])
 
-                    # Cálculo los clusters para los puntos de la iteración
-                    clusters_it = agrupacion_por_distancia_salto(puntos, umbralDistancia)
-                    clusters_json.append(clusters_it)
+                    #Para cada iteración del json
+                    for i in range(iterTotales):
+                        puntos = []
+                        #Agrupo los puntos de una iteración de la captura de datos
+                        for j in range(len(objetos[i + 1]['PuntosX'])):
+                            puntos.append((objetos[i + 1]['PuntosX'][j], objetos[i + 1]['PuntosY'][j]))
 
-                #Tras analizar el json del directorio volvemos al directorio padre
-                print("Analizado directorio actual")
-                os.chdir("..")
-                print("Volviendo al directorio anterior: ", os.getcwd())
-                clusters_directorios.append(clusters_json)
+                        # Cálculo los clusters para los puntos de la iteración
+                        clusters_it = agrupacion_por_distancia_salto(puntos, umbralDistancia)
+                        clusters_json.append(clusters_it)
+
+                    #Tras analizar el json del directorio volvemos al directorio padre
+                    if p.debug_directorios:
+                        print("Analizado directorio actual")
+                        os.chdir("..")
+                        print("Volviendo al directorio anterior: ", os.getcwd())
+                    else:
+                        os.chdir("..")
+
+                    clusters_directorios.append(clusters_json)
 
         num_clus = 1
         for cl_dir in clusters_directorios:
@@ -131,7 +153,10 @@ def main():
 
         f_clusters.close()
 
-        return clusters_directorios
+        return num_clus
 
-    iterar_directorios(directorios_pos)
-    iterar_directorios(directorios_neg)
+    print(f"Se han agrupado los puntos en clusters")
+    num_clus = iterar_directorios(directorios_pos)
+    print(f"Se han obtenido {num_clus} clusters positivos")
+    num_clus = iterar_directorios(directorios_neg)
+    print(f"Se han obtenido {num_clus} clusters negativos")

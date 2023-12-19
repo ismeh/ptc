@@ -20,7 +20,7 @@ def main(src):
     str_objeto = ""
     ficheroTTT = ""
     z = 0
-
+    x_min = 0
     distancia_inicial = 0
     # mostramos el directorio de trabajo y vemos si existe el dir para salvar los datos
     print("Directorio de trabajo inicial: ", os.getcwd()[-p.longitud_output:])
@@ -43,11 +43,12 @@ def main(src):
     elif "cilindroMenor" in fichero:
         str_objeto = "Cylinder1" #Cilindro
         ficheroTTT = "cilindro_menor.ttt"
-        z=-0.25
+        z=0.6
     else:
-        str_objeto = "Cylinder"  # Cilindro
+        str_objeto = "Cylinder0"  # Cilindro
         ficheroTTT = "cilindro_mayor.ttt"
-        z=-0.25
+        z=0.25
+        x_min = 0.7
 
 
     #Ajustamos la distancia inicial
@@ -57,9 +58,12 @@ def main(src):
     elif parte_final_fich == "Media":
         minimo = p.val_media
         maximo = p.val_lejos
+        x_min = 0
     else:
         minimo = p.val_lejos
         maximo = p.val_lejos + 1
+        x_min = 0
+
 
     print("Distancia inicial:", distancia_inicial)
     print("Objeto: ", str_objeto)
@@ -112,9 +116,9 @@ def main(src):
     seguir = True
 
     while (iteracion <= maxIter and seguir):
-        #Posición del objeto
-        x = random.uniform(minimo, maximo)
-
+        #Posición del objeto, x se cambia linealmente desde el mínimo al máximo
+        x = minimo + (maximo - minimo) * (iteracion - 1) / (p.val_iteraciones - 1)
+        x = x_min + x
         # calcula la posición en y para que no se salga del radio de 90
         cateto_opuesto = (math.tan(math.pi / 4) * x)
         y = random.uniform(-cateto_opuesto, cateto_opuesto)
@@ -187,7 +191,7 @@ def main(src):
     print("Volviendo al directorio: ", os.getcwd()[-p.longitud_output:])
 
     # Copiamos el fichero ttt correspondiente en el directorio
-    # os.system("cp " + ficheroTTT + " " + directorio)  # ubuntu
-    os.system("copy " + ficheroTTT + " " + directorio)  # windows
+    os.system("cp " + ficheroTTT + " " + directorio)  # ubuntu
+    # os.system("copy " + ficheroTTT + " " + directorio)  # windows
 
 
