@@ -1,4 +1,7 @@
 # Descripción
+Programación Técnica y Científica
+
+En esta asignatura hemos profundizado nuestro conocimiento sobre Python
 
 ## P1
 En está primera práctica usamos datos del INE sobre la población para acostumbranos a trabajar con diccionarios y los modulos siguientes:
